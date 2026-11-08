@@ -9,7 +9,8 @@ someone else's repo, and what lets a new lens be one package and one ticket.
 scan(root) ──► RepoIndex ──┬──► census       ──┐
                            ├──► a11y          ├──► sortFindings ──► terminal · JSON · CI
                            ├──► intl          │
-                           └──► agent-ready  ──┘
+                           ├──► agent-ready   │
+                           └──► security     ──┘
 ```
 
 ## The contract
@@ -24,8 +25,8 @@ own, decided by a human.
  * decision, made by a human in its own pull request — not inside a ticket.
  */
 
-/** The four things frontscan audits. */
-export type Area = "design-system" | "a11y" | "intl" | "agent-ready";
+/** The five things frontscan audits. */
+export type Area = "design-system" | "a11y" | "intl" | "agent-ready" | "security";
 
 export type Severity = "error" | "warning" | "info";
 

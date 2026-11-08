@@ -12,6 +12,7 @@
     "@frontscan/census": "workspace:*",
     "@frontscan/a11y": "workspace:*",
     "@frontscan/intl": "workspace:*",
-    "@frontscan/agent-ready": "workspace:*"
+    "@frontscan/agent-ready": "workspace:*",
+    "@frontscan/security": "workspace:*"
   }
 }

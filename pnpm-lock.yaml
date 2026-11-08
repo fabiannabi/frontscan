@@ -53,10 +53,19 @@ importers:
       '@frontscan/intl':
         specifier: workspace:*
         version: link:../intl
+      '@frontscan/security':
+        specifier: workspace:*
+        version: link:../security
 
   packages/core: {}
 
   packages/intl:
+    dependencies:
+      '@frontscan/core':
+        specifier: workspace:*
+        version: link:../core
+
+  packages/security:
     dependencies:
       '@frontscan/core':
         specifier: workspace:*

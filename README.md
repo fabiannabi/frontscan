@@ -1,7 +1,7 @@
 # frontscan
 
-**An auditor for frontend repos.** Point it at a project and it tells you, with the file,
-the line and the fix:
+**An auditor for frontend repos — and the agents that work in them.** Point it at a project and
+it tells you, with the file, the line and the fix:
 
 | Lens | What it checks | What it proposes |
 |---|---|---|
@@ -9,6 +9,7 @@ the line and the fix:
 | **a11y** | Images without alt, icon buttons without a name, inputs without labels, clickable divs | The exact attribute or element to change |
 | **intl** | Hard-coded text, CSS that breaks right-to-left, sentences built by concatenation | The logical property, the message to extract |
 | **agent-ready** | Agent instructions, one verify command, strict types, fast tests, CI | A score, and what to add first |
+| **security** | What an injected or careless agent could leak, run or publish: missing unbreakable rules, permissive agent settings, committed secrets, scripts that print the environment, unpinned CI, agent containers holding keys | The rule, setting or config to add — each one reproduced from a real attack |
 
 It reads the repo once, never runs its code and never touches the network.
 

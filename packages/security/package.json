@@ -1,0 +1,13 @@
+{
+  "name": "@frontscan/security",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Security for repos that coding agents work in: what an injected or careless agent could leak, run or publish, and what stops it.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@frontscan/core": "workspace:*"
+  }
+}
