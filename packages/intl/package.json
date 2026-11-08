@@ -1,0 +1,13 @@
+{
+  "name": "@frontscan/intl",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Internationalisation: text that cannot be translated and layout that breaks right-to-left.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@frontscan/core": "workspace:*"
+  }
+}

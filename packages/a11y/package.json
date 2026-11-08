@@ -1,0 +1,13 @@
+{
+  "name": "@frontscan/a11y",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Accessibility problems that can be found by reading the code, before anything renders.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@frontscan/core": "workspace:*"
+  }
+}

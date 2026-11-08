@@ -1,0 +1,17 @@
+{
+  "name": "frontscan",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The frontscan command: scan a repo once, run every lens, report in the terminal, as JSON, or as a CI check.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@frontscan/core": "workspace:*",
+    "@frontscan/census": "workspace:*",
+    "@frontscan/a11y": "workspace:*",
+    "@frontscan/intl": "workspace:*",
+    "@frontscan/agent-ready": "workspace:*"
+  }
+}

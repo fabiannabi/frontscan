@@ -1,0 +1,13 @@
+{
+  "name": "@frontscan/agent-ready",
+  "version": "0.0.0",
+  "private": true,
+  "description": "How ready a repo is for coding agents to work in it safely, as a score with the fixes in order of impact.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@frontscan/core": "workspace:*"
+  }
+}

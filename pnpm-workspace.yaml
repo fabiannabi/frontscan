@@ -1,0 +1,9 @@
+packages:
+  - packages/*
+
+# Supply-chain guards, the same as the author's other repos: a version must be three
+# days old before it can be resolved, a package that loses its provenance fails the
+# install, and transitive dependencies come from the registry only.
+minimumReleaseAge: 4320
+trustPolicy: no-downgrade
+blockExoticSubdeps: true

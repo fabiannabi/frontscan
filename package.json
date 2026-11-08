@@ -1,0 +1,18 @@
+{
+  "name": "frontscan-monorepo",
+  "private": true,
+  "description": "An auditor for frontend repos: design system adoption, accessibility, internationalisation and agent readiness, from one scan.",
+  "type": "module",
+  "packageManager": "pnpm@11.0.9",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "verify": "pnpm typecheck && pnpm test"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "6.0.3",
+    "vitest": "4.1.12"
+  }
+}

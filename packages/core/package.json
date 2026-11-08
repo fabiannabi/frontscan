@@ -1,0 +1,8 @@
+{
+  "name": "@frontscan/core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The scan every lens reads: files, kinds and (as tickets add them) a JSX and CSS index. Also the Finding and Lens contract.",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" }
+}
