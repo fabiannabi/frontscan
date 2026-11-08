@@ -12,7 +12,7 @@ rules are for those agents first.
 
 | Command | What it does |
 |---|---|
-| `pnpm install --frozen-lockfile` | Install. The lockfile is the truth; never edit it by hand |
+| *(done for you)* | Dependencies are installed by Forge's setup step before you start, then the workspace is sealed: `pnpm install`, `npm ci` and the like are refused and there is no network. If a ticket truly needs a new dependency, say so and stop |
 | `pnpm verify` | Typecheck (strict) and every test. **Must pass before you finish** |
 | `pnpm test -- packages/intl` | One package's tests while you work |
 

@@ -34,6 +34,7 @@ Each line is one ticket, with a fixture that plants the attack and a clean case 
 ### Agent sandboxes
 - [ ] `agent-container-secrets` — a Dockerfile / compose service for agents that receives API keys as env instead of through a credential proxy
 - [ ] `agent-network` — agent containers with unrestricted network
+- [ ] `no-setup-seal` — agents can install packages or decrypt secrets while they work, instead of a setup step that runs once and then seals the environment
 - [ ] `writable-git-pointer` — a worktree mounted read-write including its `.git`, so an agent can redirect the host's git (the `core.fsmonitor` attack)
 
 ## Staying current
