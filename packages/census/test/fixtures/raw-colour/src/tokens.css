@@ -1,0 +1,6 @@
+:root {
+  --color-primary: #3b82f6;
+  --color-text: #111827;
+  --color-surface: rgb(255, 255, 255);
+}
+.swatch { background: #ff0000; }
