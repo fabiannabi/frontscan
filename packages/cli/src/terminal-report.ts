@@ -1,7 +1,7 @@
 import { sortFindings } from "@frontscan/core";
 import type { Area, Finding, Severity } from "@frontscan/core";
 
-const AREAS: readonly Area[] = ["design-system", "a11y", "intl", "agent-ready", "security"];
+export const AREAS: readonly Area[] = ["design-system", "a11y", "intl", "agent-ready", "security"];
 
 function plural(n: number, word: string): string {
   return `${n} ${word}${n === 1 ? "" : "s"}`;

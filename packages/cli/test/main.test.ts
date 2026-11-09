@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { main } from "../src/main.js";
 
 const cwd = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures");
-const USAGE = "Usage: frontscan [path] [--json]\n";
+const USAGE = "Usage: frontscan [path] [--json] [--details|--all]\n";
 
 async function run(argv: string[], dir = cwd) {
   let stdout = "";
@@ -13,6 +13,7 @@ async function run(argv: string[], dir = cwd) {
     cwd: dir,
     stdout: (s) => (stdout += s),
     stderr: (s) => (stderr += s),
+    now: () => 0,
   });
   return { code, stdout, stderr };
 }
@@ -37,6 +38,27 @@ const FINDINGS = [
     suggestion: "Define a colour token (a `--*` custom property in a token file) and use it here.",
   },
 ];
+
+const SUMMARY = [
+  "first-run  ·  3 files  ·  0ms",
+  "",
+  "area           errors  warnings  info",
+  "design-system       0         1     1",
+  "",
+  "To fix",
+  "",
+  "census/raw-colour · warning · 1",
+  "  src/Button.css:2  Raw colour `#ff0000` in `color` bypasses the design tokens.",
+  "      → Define a colour token (a `--*` custom property in a token file) and use it here.",
+  "",
+  "Components",
+  "",
+  "component  uses  files",
+  "Button        1      1",
+  "",
+  "1 info finding not listed; run with --details to see every finding.",
+  "",
+].join("\n");
 
 const TERMINAL = [
   "design-system (2)",
@@ -64,8 +86,24 @@ describe("main", () => {
     expect(JSON.parse(r.stdout)).toEqual(FINDINGS);
   });
 
-  it("prints the terminal report", async () => {
-    expect(await run(["first-run"])).toEqual({ code: 0, stdout: TERMINAL, stderr: "" });
+  it("prints the summary report by default", async () => {
+    expect(await run(["first-run"])).toEqual({ code: 0, stdout: SUMMARY, stderr: "" });
+  });
+
+  it("prints every finding with --details and --all", async () => {
+    expect(await run(["first-run", "--details"])).toEqual({ code: 0, stdout: TERMINAL, stderr: "" });
+    expect(await run(["--all", "first-run"])).toEqual({ code: 0, stdout: TERMINAL, stderr: "" });
+  });
+
+  it("lets --json win over --details", async () => {
+    expect(await run(["first-run", "--json", "--details"])).toEqual(await run(["first-run", "--json"]));
+  });
+
+  it("colours the summary only when asked", async () => {
+    let stdout = "";
+    await main(["first-run"], { cwd, stdout: (t) => (stdout += t), stderr: () => {}, now: () => 0, colour: true });
+    expect(stdout).toContain("\x1b[1mfirst-run  ·  3 files  ·  0ms\x1b[0m");
+    expect((await run(["first-run"])).stdout).not.toContain("\x1b");
   });
 
   it("accepts --json before the path", async () => {

@@ -15,8 +15,11 @@ registerHooks({
 });
 
 const { main } = await import("../src/main.ts");
+const { shouldColour } = await import("../src/summary-report.ts");
 process.exitCode = await main(process.argv.slice(2), {
   cwd: process.cwd(),
   stdout: (s) => process.stdout.write(s),
   stderr: (s) => process.stderr.write(s),
+  colour: shouldColour(process.stdout.isTTY, process.env.NO_COLOR),
+  now: () => performance.now(),
 });
