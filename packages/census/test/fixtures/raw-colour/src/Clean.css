@@ -1,0 +1,6 @@
+.clean {
+  color: var(--color-text, #111827);
+  fill: url(#abc);
+  background: transparent;
+  border-color: red;
+}

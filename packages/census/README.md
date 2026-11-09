@@ -11,6 +11,6 @@ problem planted (and a clean case next to it), and a test that asserts the exact
 - [ ] `unused-component` — exported components nobody imports
 - [x] `prop-usage` — which props each component is actually called with, and with which static values
 - [ ] `unused-prop` — props a component declares that no call site passes
-- [ ] `raw-colour` — hex/rgb/hsl literals outside token files, with the nearest existing token
+- [x] `raw-colour` — hex/rgb/hsl literals outside token files, with the nearest existing token
 - [ ] `token-scale` — repeated colours and spacings clustered into a proposed token scale ("these 23 greys are 5")
 - [ ] `near-duplicate-component` — components whose JSX and props overlap enough to be one

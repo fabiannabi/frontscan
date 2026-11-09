@@ -1,9 +1,11 @@
-import { defineLens, jsxIndex, sortFindings } from "@frontscan/core";
+import { cssIndex, defineLens, jsxIndex, sortFindings } from "@frontscan/core";
 import { componentUsage } from "./component-usage.js";
 import { propUsage } from "./prop-usage.js";
+import { rawColour } from "./raw-colour.js";
 
 export { componentUsage } from "./component-usage.js";
 export { propUsage } from "./prop-usage.js";
+export { rawColour } from "./raw-colour.js";
 
 export const census = defineLens({
   id: "census",
@@ -11,6 +13,6 @@ export const census = defineLens({
   title: "Design system adoption",
   run(index) {
     const els = jsxIndex(index);
-    return sortFindings([...componentUsage(els), ...propUsage(els)]);
+    return sortFindings([...componentUsage(els), ...propUsage(els), ...rawColour(cssIndex(index))]);
   },
 });
