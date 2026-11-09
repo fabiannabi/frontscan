@@ -9,7 +9,8 @@ problem planted (and a clean case next to it), and a test that asserts the exact
 
 - [x] `component-usage` — every JSX component, how many times and in which files (info, feeds the report)
 - [ ] `unused-component` — exported components nobody imports
-- [ ] `prop-usage` — which props each component is actually called with; props never used
+- [x] `prop-usage` — which props each component is actually called with, and with which static values
+- [ ] `unused-prop` — props a component declares that no call site passes
 - [ ] `raw-colour` — hex/rgb/hsl literals outside token files, with the nearest existing token
 - [ ] `token-scale` — repeated colours and spacings clustered into a proposed token scale ("these 23 greys are 5")
 - [ ] `near-duplicate-component` — components whose JSX and props overlap enough to be one

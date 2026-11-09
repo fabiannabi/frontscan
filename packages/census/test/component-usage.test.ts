@@ -64,6 +64,10 @@ describe("census component-usage", () => {
   it("counts a generic component by its bare name", async () => {
     expect(await tsx("const x = <List<Item> items={x} />;")).toEqual([
       finding("`List` is used 1 time in 1 file: a.tsx (1)."),
+      {
+        ...finding("`List` receives `items` in 1 of 1 use: dynamic (1)."),
+        rule: "prop-usage",
+      },
     ]);
   });
 
