@@ -109,7 +109,9 @@ describe("cssIndex", () => {
     });
 
     it("ignores top-level statements and top-level selectors", () => {
-      expect(css("a:hover;\nb { color: red }")).toHaveLength(1);
+      expect(css("a:hover;\nb { color: red }")).toEqual([
+        { file: "a.css", property: "color", value: "red", important: false, line: 2, column: 5, origin: "stylesheet" },
+      ]);
     });
 
     it("indexes custom properties", () => {
@@ -158,7 +160,15 @@ describe("cssIndex", () => {
     });
 
     it("indexes style on components", () => {
-      expect(tsx('const x = <C style={{ top: 0 }} />;')).toHaveLength(1);
+      expect(tsx('const x = <C style={{ top: 0 }} />;')).toEqual([
+        { file: "a.tsx", property: "top", value: "0", important: false, line: 1, column: 23, origin: "style-prop" },
+      ]);
+    });
+
+    it("indexes a shorthand property without a value", () => {
+      expect(tsx("const x = <div style={{ color }} />;")).toEqual([
+        { file: "a.tsx", property: "color", important: false, line: 1, column: 25, origin: "style-prop" },
+      ]);
     });
   });
 
@@ -173,7 +183,10 @@ describe("cssIndex", () => {
   });
 
   it("does not throw on malformed tsx", () => {
-    expect(() => tsx("const x = <div style={{ a: ")).not.toThrow();
+    expect(tsx("const x = <div style={{ top: 0, a: ")).toEqual([
+      { file: "a.tsx", property: "top", value: "0", important: false, line: 1, column: 25, origin: "style-prop" },
+      { file: "a.tsx", property: "a", important: false, line: 1, column: 33, origin: "style-prop" },
+    ]);
   });
 
   it("orders by file then source order, deterministically", () => {
