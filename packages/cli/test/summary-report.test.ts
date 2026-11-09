@@ -55,10 +55,25 @@ describe("summaryReport", () => {
   });
 
   it("uses singular and formats durations", () => {
-    const head = (ms: number) => summaryReport(input({ files: 1, durationMs: ms })).split("\n")[0];
-    expect(head(0)).toBe("demo  ·  1 file  ·  0ms");
-    expect(head(999)).toBe("demo  ·  1 file  ·  999ms");
-    expect(head(1500)).toBe("demo  ·  1 file  ·  1.5s");
+    const full = (label: string) =>
+      [
+        `demo  ·  1 file  ·  ${label}`,
+        "",
+        "area           errors  warnings  info",
+        "design-system       0         0     0",
+        "",
+        "To fix",
+        "",
+        "Nothing to fix.",
+        "",
+      ].join("\n");
+    for (const [ms, label] of [
+      [0, "0ms"],
+      [999, "999ms"],
+      [1500, "1.5s"],
+    ] as const) {
+      expect(summaryReport(input({ areas: ["design-system"], files: 1, durationMs: ms }))).toBe(full(label));
+    }
   });
 
   it("lists errors only", () => {
@@ -174,8 +189,31 @@ describe("summaryReport", () => {
 
   it("joins hidden counts by severity", () => {
     const findings = [...warnings(6), finding("i", "info"), finding("i", "info")];
-    expect(summaryReport(input({ areas: ["design-system"], findings })).trimEnd().split("\n").at(-1)).toBe(
-      "1 warning, 2 info findings not listed; run with --details to see every finding.",
+    expect(summaryReport(input({ areas: ["design-system"], findings }))).toBe(
+      [
+        "demo  ·  4 files  ·  12ms",
+        "",
+        "area           errors  warnings  info",
+        "design-system       0         6     2",
+        "",
+        "To fix",
+        "",
+        "census/raw-colour · warning · 6",
+        "  a.css:1  raw-colour problem",
+        "      → Use a token.",
+        "  a.css:2  raw-colour problem",
+        "      → Use a token.",
+        "  a.css:3  raw-colour problem",
+        "      → Use a token.",
+        "  a.css:4  raw-colour problem",
+        "      → Use a token.",
+        "  a.css:5  raw-colour problem",
+        "      → Use a token.",
+        "  … and 1 more",
+        "",
+        "1 warning, 2 info findings not listed; run with --details to see every finding.",
+        "",
+      ].join("\n"),
     );
   });
 
@@ -286,9 +324,24 @@ describe("summaryReport", () => {
   });
 
   it("omits Props when no listed component received props", () => {
-    const out = summaryReport(input({ elements: [el("a.tsx", "Card")] }));
-    expect(out).not.toContain("Props");
-    expect(out).toContain("Card");
+    expect(summaryReport(input({ areas: ["design-system"], elements: [el("a.tsx", "Card")] }))).toBe(
+      [
+        "demo  ·  4 files  ·  12ms",
+        "",
+        "area           errors  warnings  info",
+        "design-system       0         0     0",
+        "",
+        "To fix",
+        "",
+        "Nothing to fix.",
+        "",
+        "Components",
+        "",
+        "component  uses  files",
+        "Card          1      1",
+        "",
+      ].join("\n"),
+    );
   });
 
   it("colours headings, severities and suggestions with fixed ANSI codes", () => {

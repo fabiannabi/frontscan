@@ -102,7 +102,28 @@ describe("main", () => {
   it("colours the summary only when asked", async () => {
     let stdout = "";
     await main(["first-run"], { cwd, stdout: (t) => (stdout += t), stderr: () => {}, now: () => 0, colour: true });
-    expect(stdout).toContain("\x1b[1mfirst-run  ·  3 files  ·  0ms\x1b[0m");
+    expect(stdout).toBe(
+      [
+        "\x1b[1mfirst-run  ·  3 files  ·  0ms\x1b[0m",
+        "",
+        "area           errors  warnings  info",
+        "design-system       0         1     1",
+        "",
+        "\x1b[1mTo fix\x1b[0m",
+        "",
+        "census/raw-colour · \x1b[33mwarning\x1b[0m · 1",
+        "  src/Button.css:2  Raw colour `#ff0000` in `color` bypasses the design tokens.",
+        "      \x1b[2m→ Define a colour token (a `--*` custom property in a token file) and use it here.\x1b[0m",
+        "",
+        "\x1b[1mComponents\x1b[0m",
+        "",
+        "component  uses  files",
+        "Button        1      1",
+        "",
+        "1 info finding not listed; run with --details to see every finding.",
+        "",
+      ].join("\n"),
+    );
     expect((await run(["first-run"])).stdout).not.toContain("\x1b");
   });
 

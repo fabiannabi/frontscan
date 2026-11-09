@@ -63,6 +63,7 @@ export async function main(argv: readonly string[], io: Io): Promise<number> {
   else if (details) io.stdout(terminalReport(sorted));
   else {
     const areas = AREAS.filter((a) => LENSES.some((l) => l.area === a));
+    const elements = jsxIndex(index);
     const durationMs = now() - started;
     io.stdout(
       summaryReport({
@@ -71,7 +72,7 @@ export async function main(argv: readonly string[], io: Io): Promise<number> {
         durationMs,
         areas,
         findings: sorted,
-        elements: jsxIndex(index),
+        elements,
         colour: io.colour === true,
       }),
     );
