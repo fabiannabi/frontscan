@@ -7,7 +7,7 @@ Design system adoption: which components are used, where, with which props, and 
 Each rule is one ticket: the rule, a fixture repo under `test/fixtures/<rule>/` with the
 problem planted (and a clean case next to it), and a test that asserts the exact findings.
 
-- [ ] `component-usage` — every JSX component, how many times and in which files (info, feeds the report)
+- [x] `component-usage` — every JSX component, how many times and in which files (info, feeds the report)
 - [ ] `unused-component` — exported components nobody imports
 - [ ] `prop-usage` — which props each component is actually called with; props never used
 - [ ] `raw-colour` — hex/rgb/hsl literals outside token files, with the nearest existing token
