@@ -6,6 +6,7 @@
   "packageManager": "pnpm@11.0.9",
   "engines": { "node": ">=24" },
   "scripts": {
+    "frontscan": "node packages/cli/bin/frontscan.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --passWithNoTests",
     "verify": "pnpm typecheck && pnpm test"
