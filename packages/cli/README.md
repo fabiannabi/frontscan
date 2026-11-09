@@ -9,8 +9,8 @@ frontscan --ci                   # exit 1 when there are errors
 
 ## Planned
 
-- [ ] `scan` — walk the repo once, honour .gitignore, build the RepoIndex (in @frontscan/core)
-- [ ] `terminal-report` — findings grouped by area, then file
-- [ ] `json-report` — the Finding[] contract, sorted with sortFindings
+- [x] `scan` — walk the repo once, honour .gitignore, build the RepoIndex (in @frontscan/core)
+- [x] `terminal-report` — findings grouped by area, then file
+- [x] `json-report` — the Finding[] contract, sorted with sortFindings
 - [ ] `ci-mode` — exit codes and a baseline file so only new findings fail
 - [ ] `tickets` — turn findings into Obsidian ticket notes for Forge's dev loop
