@@ -4,6 +4,7 @@ import { propUsage } from "./prop-usage.js";
 import { rawColour } from "./raw-colour.js";
 
 export { componentUsage } from "./component-usage.js";
+export { isComponentName } from "./component-usage.js";
 export { propUsage } from "./prop-usage.js";
 export { rawColour } from "./raw-colour.js";
 
