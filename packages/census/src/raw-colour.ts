@@ -5,13 +5,20 @@ type Rgb = readonly [number, number, number];
 interface Literal {
   readonly text: string;
   readonly rgb: Rgb;
+  readonly alpha: number;
 }
 
 interface Token {
   readonly name: string;
   readonly value: string;
   readonly rgb: Rgb;
+  readonly alpha: number;
 }
+
+const MAX_DELTA_E = 10;
+
+const NO_CLOSE_TOKEN =
+  "No colour token is close to this colour at this opacity; define one (a `--*` custom property in a token file) and use it here.";
 
 const TOKEN_DIRS = new Set(["tokens", "theme", "themes"]);
 const TOKEN_STEMS = new Set([
@@ -63,7 +70,7 @@ function hslToRgb(h: number, s: number, l: number): Rgb {
   return [channel(hue + 1 / 3), channel(hue), channel(hue - 1 / 3)];
 }
 
-function parseFunction(name: string, inner: string): Rgb | undefined {
+function parseFunction(name: string, inner: string): { rgb: Rgb; alpha: number } | undefined {
   if (inner.includes("(")) return undefined;
   const trimmed = inner.trim();
   const args = (trimmed.includes(",") ? trimmed.split(",") : trimmed.split(/[\s/]+/))
@@ -72,14 +79,15 @@ function parseFunction(name: string, inner: string): Rgb | undefined {
   if (args.length < 3 || args.length > 4) return undefined;
   const nums = args.map(parseNumber);
   if (nums.some((n) => n === undefined)) return undefined;
-  const [a, b, c] = nums as { n: number; unit: string }[];
+  const [a, b, c, d] = nums as { n: number; unit: string }[];
+  const alpha = d === undefined ? 1 : clamp(d.unit === "%" ? d.n / 100 : d.n, 0, 1);
   if (name.startsWith("rgb")) {
     const ch = (v: { n: number; unit: string }) =>
       Math.round(clamp(v.unit === "%" ? v.n * 2.55 : v.n, 0, 255));
-    return [ch(a!), ch(b!), ch(c!)];
+    return { rgb: [ch(a!), ch(b!), ch(c!)], alpha };
   }
   const turns: Record<string, number> = { "": 1, deg: 1, turn: 360, rad: 180 / Math.PI, grad: 0.9 };
-  return hslToRgb(a!.n * (turns[a!.unit] ?? 1), b!.n / 100, c!.n / 100);
+  return { rgb: hslToRgb(a!.n * (turns[a!.unit] ?? 1), b!.n / 100, c!.n / 100), alpha };
 }
 
 /** Index of the char after the `)` matching the `(` at `open`, or -1. */
@@ -104,7 +112,7 @@ function colourLiterals(value: string): Literal[] {
       const run = /^[0-9a-fA-F]+/.exec(value.slice(i + 1))?.[0] ?? "";
       const after = value[i + 1 + run.length];
       if ([3, 4, 6, 8].includes(run.length) && (after === undefined || !/[\w-]/.test(after))) {
-        out.push({ text: `#${run}`, rgb: hexToRgb(run) });
+        out.push({ text: `#${run}`, rgb: hexToRgb(run), alpha: hexToAlpha(run) });
       }
       i += 1 + run.length;
       continue;
@@ -117,8 +125,8 @@ function colourLiterals(value: string): Literal[] {
         const end = closeParen(value, open);
         if (end === -1) break;
         if (name === "rgb" || name === "rgba" || name === "hsl" || name === "hsla") {
-          const rgb = parseFunction(name, value.slice(open + 1, end - 1));
-          if (rgb) out.push({ text: value.slice(i, end), rgb });
+          const parsed = parseFunction(name, value.slice(open + 1, end - 1));
+          if (parsed) out.push({ text: value.slice(i, end), ...parsed });
         } else if (name !== "var" && name !== "url") {
           // Other functions (gradients, calc…) may hold literals: scan inside them.
           i = open + 1;
@@ -136,6 +144,12 @@ function colourLiterals(value: string): Literal[] {
 function hexToRgb(hex: string): Rgb {
   const full = hex.length <= 4 ? [...hex].map((d) => d + d).join("") : hex;
   return [0, 2, 4].map((o) => parseInt(full.slice(o, o + 2), 16)) as unknown as Rgb;
+}
+
+function hexToAlpha(hex: string): number {
+  if (hex.length === 4) return parseInt(hex[3]! + hex[3]!, 16) / 255;
+  if (hex.length === 8) return parseInt(hex.slice(6, 8), 16) / 255;
+  return 1;
 }
 
 function toLab([r, g, b]: Rgb): [number, number, number] {
@@ -169,17 +183,21 @@ export function rawColour(declarations: readonly CssDeclaration[]): Finding[] {
     if (d.origin !== "stylesheet" || !isCustomProperty(d) || d.value === undefined) continue;
     const lits = colourLiterals(d.value);
     if (lits.length === 1 && lits[0]!.text === d.value) {
-      tokens.push({ name: d.property, value: d.value, rgb: lits[0]!.rgb });
+      tokens.push({ name: d.property, value: d.value, rgb: lits[0]!.rgb, alpha: lits[0]!.alpha });
     }
   }
 
-  const suggest = (rgb: Rgb): string => {
+  const suggest = ({ rgb, alpha }: Literal): string => {
     if (tokens.length === 0) {
       return "Define a colour token (a `--*` custom property in a token file) and use it here.";
     }
+    const bits = Math.round(alpha * 255);
     const ranked = tokens
+      .filter((t) => Math.round(t.alpha * 255) === bits)
       .map((t) => ({ t, de: deltaE(rgb, t.rgb) }))
+      .filter(({ de }) => de <= MAX_DELTA_E)
       .sort((x, y) => x.de - y.de || compare(x.t.name, y.t.name) || compare(x.t.value, y.t.value));
+    if (ranked.length === 0) return NO_CLOSE_TOKEN;
     const { t, de } = ranked[0]!;
     if (t.rgb.every((v, i) => v === rgb[i])) return `Use \`var(${t.name})\` (same colour).`;
     return `Use the nearest token \`var(${t.name})\` (${t.value}, ΔE ${de.toFixed(1)}).`;
@@ -200,7 +218,7 @@ export function rawColour(declarations: readonly CssDeclaration[]): Finding[] {
         file: d.file,
         line: d.line,
         column: d.column,
-        suggestion: suggest(lit.rgb),
+        suggestion: suggest(lit),
       });
     }
   }

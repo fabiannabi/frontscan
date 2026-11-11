@@ -29,6 +29,9 @@ const found = (
 
 const NO_TOKEN = "Define a colour token (a `--*` custom property in a token file) and use it here.";
 
+const NO_CLOSE =
+  "No colour token is close to this colour at this opacity; define one (a `--*` custom property in a token file) and use it here.";
+
 const run = (...files: [string, FileKind, string][]) =>
   sortFindings(rawColour(cssIndex(repo(...files))));
 const css = (text: string) => run(["src/a.css", "css", `.a {\n  ${text}\n}\n`]);
@@ -47,7 +50,7 @@ describe("census raw-colour", () => {
         3,
         "rgba(59, 130, 246, 0.5)",
         "background",
-        "Use `var(--color-primary)` (same colour).",
+        NO_CLOSE,
       ),
       found(
         "src/Button.css",
@@ -160,6 +163,68 @@ describe("census raw-colour", () => {
         ["src/a.css", "css", ".a {\n  color: #111;\n}\n"],
       ),
     ).toEqual([at("#111", "color", "Use `var(--a)` (same colour).")]);
+  });
+
+  const withTokens = (tokens: string, body: string) =>
+    run(
+      ["src/global.css", "css", `:root {\n${tokens}\n}\n`],
+      ["src/a.css", "css", `.a {\n${body}\n}\n`],
+    );
+  const line = (n: number, literal: string, property: string, suggestion: string) =>
+    found("src/a.css", n, 3, literal, property, suggestion);
+
+  it("does not match a translucent literal to a solid token", () => {
+    expect(
+      withTokens("  --popup-text-color: #000;", "  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);"),
+    ).toEqual([line(2, "rgba(0, 0, 0, 0.1)", "box-shadow", NO_CLOSE)]);
+  });
+
+  it("matches a translucent token at the same alpha", () => {
+    expect(
+      withTokens("  --shadow: rgba(0, 0, 0, 0.1);", "  color: rgba(0, 0, 0, 0.1);\n  fill: #0000001a;"),
+    ).toEqual([
+      line(2, "rgba(0, 0, 0, 0.1)", "color", "Use `var(--shadow)` (same colour)."),
+      line(3, "#0000001a", "fill", "Use `var(--shadow)` (same colour)."),
+    ]);
+  });
+
+  it("does not match a solid literal to a translucent token", () => {
+    expect(withTokens("  --shadow: rgba(0, 0, 0, 0.1);", "  color: #000;")).toEqual([
+      line(2, "#000", "color", NO_CLOSE),
+    ]);
+  });
+
+  it("treats alpha written as %, number or hex alike", () => {
+    const same = "Use `var(--half)` (same colour).";
+    expect(
+      withTokens(
+        "  --half: rgba(0, 0, 0, 0.5);",
+        "  color: rgb(0 0 0 / 50%);\n  fill: #00000080;\n  stroke: hsla(0, 0%, 0%, 0.5);",
+      ),
+    ).toEqual([
+      line(2, "rgb(0 0 0 / 50%)", "color", same),
+      line(3, "#00000080", "fill", same),
+      line(4, "hsla(0, 0%, 0%, 0.5)", "stroke", same),
+    ]);
+  });
+
+  it("reads alpha from 4-digit hex", () => {
+    expect(withTokens("  --x: #abcd;", "  color: #aabbccdd;")).toEqual([
+      line(2, "#aabbccdd", "color", "Use `var(--x)` (same colour)."),
+    ]);
+    expect(withTokens("  --y: #abc;", "  color: #abcd;")).toEqual([
+      line(2, "#abcd", "color", NO_CLOSE),
+    ]);
+  });
+
+  it("says no token is close when the nearest is beyond ΔE 10", () => {
+    expect(withTokens("  --brand: #f00;", "  color: #00f;")).toEqual([
+      line(2, "#00f", "color", NO_CLOSE),
+    ]);
+    expect(withTokens("  --grey: #808080;", "  color: #999;\n  fill: #9b9b9b;")).toEqual([
+      line(2, "#999", "color", "Use the nearest token `var(--grey)` (#808080, ΔE 9.6)."),
+      line(3, "#9b9b9b", "fill", NO_CLOSE),
+    ]);
   });
 
   it("gives no finding for a non-literal style prop", () => {
