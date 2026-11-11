@@ -46,6 +46,24 @@ describe("htmlReport", () => {
     expect(htmlReport(smallInput())).toEqual(expected);
   });
 
+  it("renders the adoption score right after the overview table, escaped", () => {
+    const score = finding({
+      rule: "adoption-score",
+      severity: "info",
+      message: "Design system adoption: 50% of <b>interactive</b> elements (2 of 4; 2 plain HTML).",
+    });
+    const p = "<p>Design system adoption: 50% of &lt;b&gt;interactive&lt;/b&gt; elements (2 of 4; 2 plain HTML).</p>";
+    const without = htmlReport({ ...empty, findings: [] });
+    const html = htmlReport({ ...empty, findings: [score] });
+    const end = without.indexOf("</table>") + 8;
+    expect(html.slice(end, end + p.length + 1)).toEqual(`\n${p}`);
+  });
+
+  it("leaves the output unchanged without an adoption-score finding", () => {
+    expect(htmlReport({ ...empty, findings: [finding()] })).not.toContain("adoption");
+    expect(htmlReport(empty)).not.toContain("<p>Design system");
+  });
+
   it("lists every finding of a rule", () => {
     const findings = Array.from({ length: 12 }, (_, i) => finding({ message: `m${i}`, file: "f.css", line: i + 1 }));
     const html = htmlReport({ ...empty, findings });

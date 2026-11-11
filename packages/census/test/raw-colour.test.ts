@@ -41,7 +41,7 @@ const at = (literal: string, property: string, suggestion = NO_TOKEN) =>
 describe("census raw-colour", () => {
   it("reports the fixture exactly", async () => {
     const index = await scan(fileURLToPath(new URL("./fixtures/raw-colour", import.meta.url)));
-    expect(await census.run(index)).toEqual([
+    expect((await census.run(index)).filter((f) => f.rule !== "adoption-score")).toEqual([
       found("src/App.tsx", 2, 17, "#fff", "color", "Use `var(--color-surface)` (same colour)."),
       found("src/Button.css", 2, 3, "#3B82F6", "color", "Use `var(--color-primary)` (same colour)."),
       found(

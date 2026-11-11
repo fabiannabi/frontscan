@@ -103,7 +103,10 @@ export function htmlReport(input: HtmlReportInput): string {
     ].join("\n"),
   );
 
-  const fix = fixGroups(input.findings, ["error", "warning"]);
+  const score = input.findings.find((f) => f.lens === "census" && f.rule === "adoption-score");
+  if (score !== undefined) main.push(`<p>${escapeHtml(score.message)}</p>`);
+
+  const fix =fixGroups(input.findings, ["error", "warning"]);
   main.push(
     [
       "<section>",

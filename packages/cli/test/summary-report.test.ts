@@ -55,6 +55,30 @@ describe("summaryReport", () => {
     );
   });
 
+  it("prints the adoption score right after the area table", () => {
+    const score = finding("adoption-score", "info", {
+      message: "Design system adoption: 43% of interactive elements (30 of 70; 40 plain HTML).",
+    });
+    expect(summaryReport(input({ findings: [score] }))).toBe(
+      [
+        "demo  ·  4 files  ·  12ms",
+        "",
+        "area           errors  warnings  info",
+        "design-system       0         0     1",
+        "a11y                0         0     0",
+        "",
+        "Design system adoption: 43% of interactive elements (30 of 70; 40 plain HTML).",
+        "",
+        "To fix",
+        "",
+        "Nothing to fix.",
+        "",
+        "1 info finding not listed; run with --details to see every finding.",
+        "",
+      ].join("\n"),
+    );
+  });
+
   it("uses singular and formats durations", () => {
     const head = (ms: number) => summaryReport(input({ files: 1, durationMs: ms })).split("\n")[0];
     expect(head(0)).toBe("demo  ·  1 file  ·  0ms");

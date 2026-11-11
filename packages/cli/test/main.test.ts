@@ -24,6 +24,14 @@ async function run(argv: string[], dir = cwd) {
 const FINDINGS = [
   {
     lens: "census",
+    rule: "adoption-score",
+    area: "design-system",
+    severity: "info",
+    message: "No design system found; set one in frontscan.config.json.",
+    suggestion: 'Add `"designSystem": ["<package>"]` to frontscan.config.json.',
+  },
+  {
+    lens: "census",
     rule: "component-usage",
     area: "design-system",
     severity: "info",
@@ -46,7 +54,9 @@ const SUMMARY = [
   "first-run  ·  3 files  ·  0ms",
   "",
   "area           errors  warnings  info",
-  "design-system       0         1     1",
+  "design-system       0         1     2",
+  "",
+  "No design system found; set one in frontscan.config.json.",
   "",
   "To fix",
   "",
@@ -59,19 +69,21 @@ const SUMMARY = [
   "component  uses  files",
   "Button        1      1",
   "",
-  "1 info finding not listed; run with --details to see every finding.",
+  "2 info findings not listed; run with --details to see every finding.",
   "",
 ].join("\n");
 
 const TERMINAL = [
-  "design-system (2)",
+  "design-system (3)",
   "  (repo)",
+  "      info  No design system found; set one in frontscan.config.json.  census/adoption-score",
+  "            → Add `\"designSystem\": [\"<package>\"]` to frontscan.config.json.",
   "      info  `Button` is used 1 time in 1 file: src/App.tsx (1).  census/component-usage",
   "  src/Button.css",
   "      2:3  warning  Raw colour `#ff0000` in `color` bypasses the design tokens.  census/raw-colour",
   "                    → Define a colour token (a `--*` custom property in a token file) and use it here.",
   "",
-  "2 findings (0 errors, 1 warning, 1 info)",
+  "3 findings (0 errors, 1 warning, 2 info)",
   "",
 ].join("\n");
 

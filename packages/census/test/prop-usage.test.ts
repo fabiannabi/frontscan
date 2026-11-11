@@ -23,7 +23,7 @@ const tsx = (text: string) => usage(["a.tsx", "tsx", text]);
 describe("census prop-usage", () => {
   it("reports the fixture exactly", async () => {
     const index = await scan(fileURLToPath(new URL("./fixtures/prop-usage", import.meta.url)));
-    expect(await census.run(index)).toEqual([
+    expect((await census.run(index)).filter((f) => f.rule !== "adoption-score")).toEqual([
       {
         lens: "census",
         rule: "component-usage",
