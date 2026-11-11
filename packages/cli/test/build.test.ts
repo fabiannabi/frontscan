@@ -69,5 +69,7 @@ const EXPECTED_FILES = [
   "core/src/jsx-index.js",
   "core/src/scan.js",
   "core/src/sort-findings.js",
+  "core/src/tsconfig-paths.js",
   "core/src/types.js",
+  "core/src/workspace.js",
 ];

@@ -1,5 +1,12 @@
 import ts from "typescript";
-import { declaredDependencies, designSystemPackages, isDesignSystemModule } from "./design-system.js";
+import {
+  declaredDependencies,
+  designSystemFolders,
+  designSystemPackages,
+  isDesignSystemModule,
+} from "./design-system.js";
+import { createImportResolver } from "./tsconfig-paths.js";
+import { workspacePackages } from "./workspace.js";
 import type { RepoIndex } from "./types.js";
 
 export interface JsxProp {
@@ -75,6 +82,11 @@ export function jsxIndex(index: RepoIndex): readonly JsxElement[] {
   const out: JsxElement[] = [];
   const dsPackages = designSystemPackages(index);
   const dependencies = declaredDependencies(index);
+  const dsFolders = designSystemFolders(index);
+  const workspaces = workspacePackages(index);
+  const workspaceNames = new Set(workspaces.map((w) => w.name));
+  const resolveImport = createImportResolver(index, new Set([...dependencies, ...workspaceNames]));
+  const within = (path: string, dir: string) => path === dir || path.startsWith(`${dir}/`);
   for (const file of index.files) {
     if (file.kind !== "tsx" && file.kind !== "jsx") continue;
     const sf = ts.createSourceFile(
@@ -94,7 +106,14 @@ export function jsxIndex(index: RepoIndex): readonly JsxElement[] {
       const source = imports.get(root);
       if (source !== undefined) {
         if (isDesignSystemModule(source, dsPackages)) return { origin: "design-system", source };
-        if (isBare(source) && dependencies.has(packageName(source))) {
+        const resolved = resolveImport(file.path, source);
+        if (resolved !== undefined) {
+          const foreign = (dir: string) => within(resolved, dir) && !within(file.path, dir);
+          if (dsFolders.some(foreign)) return { origin: "design-system", source };
+          if (workspaces.some((w) => foreign(w.dir))) return { origin: "external", source };
+        }
+        const pkg = packageName(source);
+        if (isBare(source) && (dependencies.has(pkg) || workspaceNames.has(pkg))) {
           return { origin: "external", source };
         }
         return { origin: "local", source };

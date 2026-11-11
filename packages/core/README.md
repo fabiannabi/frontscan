@@ -11,3 +11,4 @@ Each line is one ticket.
 - [x] `jsx-index` — every JSX element with its name, props (literal values where static) and position, from the TypeScript parser
 - [x] `css-index` — every declaration (property, value, position) in CSS/SCSS files and in style objects
 - [x] `ds-origin` — each JSX element's origin (design-system / local / external / html) from imports, design-system packages from frontscan.config.json or package.json
+- [x] `ds-aliases` — design system through workspace packages, tsconfig paths/extends/references and relative imports; config accepts folders and aliases
