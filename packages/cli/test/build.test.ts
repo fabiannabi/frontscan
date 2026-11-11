@@ -63,6 +63,7 @@ const EXPECTED_FILES = [
   "cli/src/terminal-report.js",
   "core/src/css-index.js",
   "core/src/define-lens.js",
+  "core/src/design-system.js",
   "core/src/gitignore.js",
   "core/src/index.js",
   "core/src/jsx-index.js",

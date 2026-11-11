@@ -22,11 +22,11 @@ describe("jsxIndex", () => {
     ].join("\n");
     expect(jsxIndex(repo(["src/App.tsx", "tsx", text]))).toEqual([
       {
-        file: "src/App.tsx", name: "Card", hasSpread: true, line: 3, column: 5,
+        file: "src/App.tsx", name: "Card", hasSpread: true, line: 3, column: 5, origin: "local",
         props: [{ name: "title", value: "Hi", line: 3, column: 11 }],
       },
       {
-        file: "src/App.tsx", name: "Button", hasSpread: false, line: 4, column: 7,
+        file: "src/App.tsx", name: "Button", hasSpread: false, line: 4, column: 7, origin: "local",
         props: [
           { name: "variant", value: "primary", line: 4, column: 15 },
           { name: "size", value: 2, line: 4, column: 33 },
@@ -66,18 +66,34 @@ describe("jsxIndex", () => {
   });
 
   it("keeps names as written", () => {
-    const names = tsx(
-      "const x = <div><Menu.Item /><svg:rect xlink:href=\"a\" aria-label=\"b\" /><List<Item> items={x} /></div>;",
-    );
-    expect(names.map((e) => e.name)).toEqual(["div", "Menu.Item", "svg:rect", "List"]);
-    expect(names[2]!.props.map((p) => p.name)).toEqual(["xlink:href", "aria-label"]);
+    expect(
+      tsx(
+        "const x = <div><Menu.Item /><svg:rect xlink:href=\"a\" aria-label=\"b\" /><List<Item> items={x} /></div>;",
+      ),
+    ).toEqual([
+      { file: "a.tsx", name: "div", props: [], hasSpread: false, line: 1, column: 11, origin: "html" },
+      { file: "a.tsx", name: "Menu.Item", props: [], hasSpread: false, line: 1, column: 16, origin: "local" },
+      {
+        file: "a.tsx", name: "svg:rect", hasSpread: false, line: 1, column: 29, origin: "html",
+        props: [
+          { name: "xlink:href", value: "a", line: 1, column: 39 },
+          { name: "aria-label", value: "b", line: 1, column: 54 },
+        ],
+      },
+      {
+        file: "a.tsx", name: "List", hasSpread: false, line: 1, column: 71, origin: "local",
+        props: [{ name: "items", line: 1, column: 83 }],
+      },
+    ]);
   });
 
   it("skips fragments but indexes their children and React.Fragment", () => {
-    expect(tsx("const x = <><A /></>;").map((e) => e.name)).toEqual(["A"]);
-    expect(tsx("const x = <React.Fragment><A /></React.Fragment>;").map((e) => e.name)).toEqual([
-      "React.Fragment",
-      "A",
+    expect(tsx("const x = <><A /></>;")).toEqual([
+      { file: "a.tsx", name: "A", props: [], hasSpread: false, line: 1, column: 13, origin: "local" },
+    ]);
+    expect(tsx("const x = <React.Fragment><A /></React.Fragment>;")).toEqual([
+      { file: "a.tsx", name: "React.Fragment", props: [], hasSpread: false, line: 1, column: 11, origin: "local" },
+      { file: "a.tsx", name: "A", props: [], hasSpread: false, line: 1, column: 27, origin: "local" },
     ]);
   });
 
@@ -88,17 +104,125 @@ describe("jsxIndex", () => {
         ["a.tsx", "tsx", "const x = <C />;"],
       ),
     );
-    expect(out.map((e) => [e.file, e.name])).toEqual([
-      ["b.tsx", "A"],
-      ["b.tsx", "B"],
-      ["a.tsx", "C"],
+    expect(out).toEqual([
+      { file: "b.tsx", name: "A", props: [], hasSpread: false, line: 1, column: 11, origin: "local" },
+      { file: "b.tsx", name: "B", props: [], hasSpread: false, line: 1, column: 14, origin: "local" },
+      { file: "a.tsx", name: "C", props: [], hasSpread: false, line: 1, column: 11, origin: "local" },
     ]);
+  });
+
+  describe("origin", () => {
+    const pkg = (deps: Record<string, string>) => [
+      "package.json",
+      "json",
+      JSON.stringify({ dependencies: deps }),
+    ] as [string, FileKind, string];
+    const ds = (...extra: [string, FileKind, string][]) => [
+      ["frontscan.config.json", "json", '{"designSystem":["@acme/ui"]}'] as [string, FileKind, string],
+      pkg({ "react-router": "^7", "framer-motion": "^11" }),
+      ...extra,
+    ];
+    const one = (text: string, ...extra: [string, FileKind, string][]) =>
+      jsxIndex(repo(...ds(["a.tsx", "tsx", text], ...extra)));
+    const base = { file: "a.tsx", props: [], hasSpread: false };
+
+    it.each([
+      ['import { Button } from "@acme/ui";\nconst x = <Button/>;', "Button"],
+      ['import Button from "@acme/ui/Button";\nconst x = <Button/>;', "Button"],
+      ['import { Button as B } from "@acme/ui";\nconst x = <B/>;', "B"],
+    ])("design system import: %s", (text, name) => {
+      const source = text.includes("/Button") ? "@acme/ui/Button" : "@acme/ui";
+      expect(one(text)).toEqual([{ ...base, name, line: 2, column: 11, origin: "design-system", source }]);
+    });
+
+    it("design system namespace import", () => {
+      expect(one('import * as UI from "@acme/ui";\nconst x = <UI.Button/>;')).toEqual([
+        { ...base, name: "UI.Button", line: 2, column: 11, origin: "design-system", source: "@acme/ui" },
+      ]);
+    });
+
+    it("local relative and alias imports", () => {
+      expect(
+        one('import { Card } from "./Card";\nimport { Tile } from "@/components/Tile";\nconst x = <Card><Tile/></Card>;'),
+      ).toEqual([
+        { ...base, name: "Card", line: 3, column: 11, origin: "local", source: "./Card" },
+        { ...base, name: "Tile", line: 3, column: 17, origin: "local", source: "@/components/Tile" },
+      ]);
+    });
+
+    it("external import from a dependency", () => {
+      expect(one('import { Link } from "react-router";\nconst x = <Link/>;')).toEqual([
+        { ...base, name: "Link", line: 2, column: 11, origin: "external", source: "react-router" },
+      ]);
+    });
+
+    it("imported lowercase root follows its import", () => {
+      expect(one('import { motion } from "framer-motion";\nconst x = <motion.div/>;')).toEqual([
+        { ...base, name: "motion.div", line: 2, column: 11, origin: "external", source: "framer-motion" },
+      ]);
+    });
+
+    it("declared or unknown capitalised names are local without a source", () => {
+      expect(one("function Card() { return null; }\nconst x = <Card/>;")).toEqual([
+        { ...base, name: "Card", line: 2, column: 11, origin: "local" },
+      ]);
+      expect(one("const x = <Global/>;")).toEqual([
+        { ...base, name: "Global", line: 1, column: 11, origin: "local" },
+      ]);
+    });
+
+    it("html tags that are not imported", () => {
+      expect(one("const x = <div><svg:rect/><my-element/></div>;")).toEqual([
+        { ...base, name: "div", line: 1, column: 11, origin: "html" },
+        { ...base, name: "svg:rect", line: 1, column: 16, origin: "html" },
+        { ...base, name: "my-element", line: 1, column: 27, origin: "html" },
+      ]);
+    });
+
+    it("ignores type-only imports", () => {
+      expect(one('import type { Button } from "@acme/ui";\nconst x = <Button/>;')).toEqual([
+        { ...base, name: "Button", line: 2, column: 11, origin: "local" },
+      ]);
+    });
+
+    it("ignores require and dynamic import", () => {
+      expect(
+        one('const Button = require("@acme/ui");\nconst Card = import("@acme/ui");\nconst x = <Button><Card/></Button>;'),
+      ).toEqual([
+        { ...base, name: "Button", line: 3, column: 11, origin: "local" },
+        { ...base, name: "Card", line: 3, column: 19, origin: "local" },
+      ]);
+    });
+
+    it("ignores an inline type import but keeps the value import", () => {
+      expect(
+        one('import { type Button, Card } from "@acme/ui";\nconst x = <Button><Card/></Button>;'),
+      ).toEqual([
+        { ...base, name: "Button", line: 2, column: 11, origin: "local" },
+        { ...base, name: "Card", line: 2, column: 19, origin: "design-system", source: "@acme/ui" },
+      ]);
+    });
+
+    it("bare import of a package that is not a dependency is local", () => {
+      expect(one('import { Card } from "components/Card";\nconst x = <Card/>;')).toEqual([
+        { ...base, name: "Card", line: 2, column: 11, origin: "local", source: "components/Card" },
+      ]);
+    });
+
+    it("has no design-system origin without config or detection", () => {
+      const out = jsxIndex(
+        repo(["a.tsx", "tsx", 'import { Button } from "@acme/ui";\nconst x = <Button/>;']),
+      );
+      expect(out).toEqual([
+        { ...base, name: "Button", line: 2, column: 11, origin: "local", source: "@acme/ui" },
+      ]);
+    });
   });
 
   it("parses jsx files", () => {
     expect(jsxIndex(repo(["a.jsx", "jsx", "const x = <div id=\"a\" />;"]))).toEqual([
       {
-        file: "a.jsx", name: "div", hasSpread: false, line: 1, column: 11,
+        file: "a.jsx", name: "div", hasSpread: false, line: 1, column: 11, origin: "html",
         props: [{ name: "id", value: "a", line: 1, column: 16 }],
       },
     ]);
@@ -112,6 +236,10 @@ describe("jsxIndex", () => {
   it("does not throw on broken files and is deterministic", () => {
     const index = repo(["a.tsx", "tsx", "const x = <div><span></div>;"]);
     expect(() => jsxIndex(index)).not.toThrow();
+    expect(jsxIndex(index)).toEqual([
+      { file: "a.tsx", name: "div", props: [], hasSpread: false, line: 1, column: 11, origin: "html" },
+      { file: "a.tsx", name: "span", props: [], hasSpread: false, line: 1, column: 16, origin: "html" },
+    ]);
     expect(jsxIndex(index)).toEqual(jsxIndex(index));
   });
 });
