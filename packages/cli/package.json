@@ -1,13 +1,27 @@
 {
   "name": "frontscan",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "The frontscan command: scan a repo once, run every lens, report in the terminal, as JSON, or as a CI check.",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fabiannabi/frontscan.git"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "bin": {
+    "frontscan": "./dist/cli/src/bin.js"
+  },
+  "files": ["dist", "LICENSE", "README.md"],
   "exports": {
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "typescript": "6.0.3"
+  },
+  "devDependencies": {
     "@frontscan/core": "workspace:*",
     "@frontscan/census": "workspace:*",
     "@frontscan/a11y": "workspace:*",

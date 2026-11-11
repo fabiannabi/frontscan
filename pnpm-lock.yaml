@@ -38,6 +38,10 @@ importers:
 
   packages/cli:
     dependencies:
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+    devDependencies:
       '@frontscan/a11y':
         specifier: workspace:*
         version: link:../a11y
