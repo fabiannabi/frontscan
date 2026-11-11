@@ -68,6 +68,7 @@ const EXPECTED_FILES = [
   "core/src/gitignore.js",
   "core/src/index.js",
   "core/src/jsx-index.js",
+  "core/src/product-files.js",
   "core/src/scan.js",
   "core/src/sort-findings.js",
   "core/src/tsconfig-paths.js",

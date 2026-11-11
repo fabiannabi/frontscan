@@ -1,6 +1,6 @@
 import { statSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { jsxIndex, scan, sortFindings } from "@frontscan/core";
+import { jsxIndex, productIndex, scan, sortFindings } from "@frontscan/core";
 import type { Finding } from "@frontscan/core";
 import { htmlReport } from "./html-report.js";
 import { jsonReport } from "./json-report.js";
@@ -20,7 +20,7 @@ export interface Io {
   writeFile?(path: string, text: string): void;
 }
 
-const USAGE = "Usage: frontscan [path] [--json] [--details|--all] [--html <file>]\n";
+const USAGE = "Usage: frontscan [path] [--json] [--details|--all] [--all-files] [--html <file>]\n";
 
 function isDirectory(p: string): boolean {
   try {
@@ -37,12 +37,14 @@ export async function main(argv: readonly string[], io: Io): Promise<number> {
   }
   let json = false;
   let details = false;
+  let allFiles = false;
   let htmlFile: string | undefined;
   const paths: string[] = [];
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i]!;
     if (arg === "--json") json = true;
     else if (arg === "--details" || arg === "--all") details = true;
+    else if (arg === "--all-files") allFiles = true;
     else if (arg === "--html" || arg.startsWith("--html=")) {
       const next = arg === "--html" ? argv[i + 1] : arg.slice("--html=".length);
       if (next === undefined || next === "" || next.startsWith("-")) {
@@ -68,7 +70,7 @@ export async function main(argv: readonly string[], io: Io): Promise<number> {
   }
   const now = io.now ?? (() => performance.now());
   const started = now();
-  const index = await scan(root);
+  const { index, excluded } = productIndex(await scan(root), { allFiles });
   const findings: Finding[] = [];
   for (const lens of LENSES) findings.push(...(await lens.run(index)));
   const sorted = sortFindings(findings);
@@ -82,6 +84,7 @@ export async function main(argv: readonly string[], io: Io): Promise<number> {
       summaryReport({
         repo,
         files: index.files.length,
+        excluded,
         durationMs,
         areas,
         findings: sorted,
@@ -94,6 +97,7 @@ export async function main(argv: readonly string[], io: Io): Promise<number> {
     const html = htmlReport({
       repo,
       files: index.files.length,
+      excluded,
       areas,
       findings: sorted,
       elements: jsxIndex(index),

@@ -38,6 +38,26 @@ const warnings = (n: number) =>
   );
 
 describe("summaryReport", () => {
+  it("says how many files were left out, only when above 0", () => {
+    const body = [
+      "",
+      "area           errors  warnings  info",
+      "design-system       0         0     0",
+      "a11y                0         0     0",
+      "",
+      "To fix",
+      "",
+      "Nothing to fix.",
+      "",
+    ];
+    const withHead = (head: string) => [head, ...body].join("\n");
+    expect(summaryReport(input({ files: 1, excluded: 2 }))).toBe(
+      withHead("demo  ·  1 file (2 tests and fixtures left out)  ·  12ms"),
+    );
+    expect(summaryReport(input({ files: 1, excluded: 0 }))).toBe(withHead("demo  ·  1 file  ·  12ms"));
+    expect(summaryReport(input({ files: 1 }))).toBe(withHead("demo  ·  1 file  ·  12ms"));
+  });
+
   it("reports no findings at all", () => {
     expect(summaryReport(input())).toBe(
       [
