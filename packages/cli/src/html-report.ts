@@ -37,7 +37,7 @@ li{margin:.4rem 0}
 summary{cursor:pointer;font-weight:600}
 label{display:block;font-weight:600}
 input[type=search]{font:inherit;padding:.25rem .5rem;margin:.25rem 0 1rem;min-width:16rem;color:var(--fg);background:var(--bg);border:1px solid var(--line)}
-@media print{.filter{display:none}details>:not(summary){display:block}tr,li{break-inside:avoid}a{color:inherit}}`;
+@media print{.filter{display:none}details>:not(summary){display:block}details::details-content{content-visibility:visible;display:contents}tr,li{break-inside:avoid}a{color:inherit}}`;
 
 const SCRIPT = `(function(){var i=document.getElementById("filter");if(!i)return;
 var rows=document.querySelectorAll("[data-filter]");
@@ -61,7 +61,8 @@ function location(f: Finding): string {
   if (f.file === undefined) return "<code>(repo)</code>";
   const file = escapeHtml(f.file);
   const text = f.line !== undefined ? `${file}:${f.line}` : file;
-  return `<a href="${file}"><code>${text}</code></a>`;
+  const href = escapeHtml(f.file.split("/").map(encodeURIComponent).join("/"));
+  return `<a href="${href}"><code>${text}</code></a>`;
 }
 
 function groupSection(g: FixGroup): string {

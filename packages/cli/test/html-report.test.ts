@@ -71,12 +71,25 @@ describe("htmlReport", () => {
       findings: [finding({ message: t, suggestion: t, file: t, line: 1 })],
       elements: [element("Btn", "a.tsx", [{ name: "variant", value: t }] as never)],
     });
-    expect(html).toContain(`<title>frontscan · ${e}</title>`);
-    expect(html).toContain(`<h1>${e}</h1>`);
-    expect(html).toContain(`<li><a href="${e}"><code>${e}:1</code></a> ${e}<br><span class="hint">→ ${e}</span></li>`);
-    expect(html).toContain(
+    const line = (prefix: string) => html.split("\n").find((l) => l.startsWith(prefix));
+    expect(line("<title>")).toEqual(`<title>frontscan · ${e}</title>`);
+    expect(html.slice(html.indexOf("<header>"), html.indexOf("</header>") + 9)).toEqual(
+      `<header>\n<h1>${e}</h1>\n<p>0 files</p>\n</header>`,
+    );
+    // href is percent-encoded, then escaped: encodeURIComponent leaves ' alone, so it becomes &#39;
+    const href = "%3C%3E%26%22&#39;";
+    expect(line("<li>")).toEqual(`<li><a href="${href}"><code>${e}:1</code></a> ${e}<br><span class="hint">→ ${e}</span></li>`);
+    expect(line('<tr data-filter="Btn variant"')).toEqual(
       `<tr data-filter="Btn variant"><th scope="row">variant</th><td class="num">1</td><td>&quot;&lt;&gt;&amp;\\&quot;&#39;&quot; (1)</td></tr>`,
     );
+  });
+
+  it("percent-encodes link targets so a path cannot become a script URL", () => {
+    const li = (file: string) => mainOf(htmlReport({ ...empty, findings: [finding({ file, line: 2 })] })).match(/<li>.*<\/li>/)![0];
+    expect(li("javascript:x/a.css")).toEqual(
+      '<li><a href="javascript%3Ax/a.css"><code>javascript:x/a.css:2</code></a> Raw colour.</li>',
+    );
+    expect(li("src/a#b?.css")).toEqual('<li><a href="src/a%23b%3F.css"><code>src/a#b?.css:2</code></a> Raw colour.</li>');
   });
 
   it("renders the three link forms", () => {

@@ -89,31 +89,33 @@ async function runHtml(argv: string[], writeFile?: Io["writeFile"]) {
   return { code, stdout, stderr, written };
 }
 
+const expectedWrite = [
+  [
+    path.resolve(cwd, "out.html"),
+    htmlReport({
+      repo: "first-run",
+      files: 3,
+      areas: ["design-system"],
+      findings: FINDINGS as Finding[],
+      elements: [{ name: "Button", file: "src/App.tsx", line: 1, column: 1, props: [] } as unknown as JsxElement],
+    }),
+  ],
+];
+
 describe("main --html", () => {
   it("writes the report and prints the summary", async () => {
     const r = await runHtml(["first-run", "--html", "out.html"]);
     expect({ code: r.code, stdout: r.stdout, stderr: r.stderr }).toEqual({ code: 0, stdout: SUMMARY, stderr: "" });
-    expect(r.written).toEqual([
-      [
-        path.resolve(cwd, "out.html"),
-        htmlReport({
-          repo: "first-run",
-          files: 3,
-          areas: ["design-system"],
-          findings: FINDINGS as Finding[],
-          elements: [{ name: "Button", file: "src/App.tsx", line: 1, column: 1, props: [] } as unknown as JsxElement],
-        }),
-      ],
-    ]);
+    expect(r.written).toEqual(expectedWrite);
   });
 
   it("keeps --json and --details output", async () => {
     const json = await runHtml(["first-run", "--json", "--html", "out.html"]);
     expect(json.stdout).toEqual((await run(["first-run", "--json"])).stdout);
-    expect(json.written.length).toEqual(1);
+    expect(json.written).toEqual(expectedWrite);
     const details = await runHtml(["--details", "first-run", "--html", "out.html"]);
     expect(details.stdout).toEqual(TERMINAL);
-    expect(details.written.length).toEqual(1);
+    expect(details.written).toEqual(expectedWrite);
   });
 
   it("needs a file path", async () => {
