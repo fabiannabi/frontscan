@@ -4,3 +4,5 @@ coverage/
 *.log
 .DS_Store
 packages/*/test/fixtures/.tmp-*/
+packages/cli/LICENSE
+*.tgz

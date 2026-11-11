@@ -1,5 +1,7 @@
 # frontscan (CLI)
 
+Installed with `npx frontscan .`.
+
 ```bash
 frontscan [path]                 # every lens, readable summary
 frontscan --details              # every finding, one by one (alias: --all)

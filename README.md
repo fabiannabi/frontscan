@@ -60,7 +60,15 @@ it took.
 
 ## Use it
 
-Not published to npm yet. From a clone:
+### Install
+
+```bash
+npx frontscan .
+```
+
+Releases: 0.1.0 published by hand; later versions from a `frontscan-vX.Y.Z` tag through npm trusted publishing with provenance, each approved by the maintainer.
+
+From a clone (for contributors):
 
 ```bash
 pnpm install
