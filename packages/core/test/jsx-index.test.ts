@@ -1,5 +1,13 @@
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { jsxIndex, type FileKind, type RepoIndex } from "../src/index.js";
+import {
+  designSystemFolders,
+  designSystemPackages,
+  jsxIndex,
+  scan,
+  type FileKind,
+  type RepoIndex,
+} from "../src/index.js";
 
 const repo = (...files: [string, FileKind, string][]): RepoIndex => ({
   root: "/r",
@@ -241,5 +249,77 @@ describe("jsxIndex", () => {
       { file: "a.tsx", name: "span", props: [], hasSpread: false, line: 1, column: 16, origin: "html" },
     ]);
     expect(jsxIndex(index)).toEqual(jsxIndex(index));
+  });
+});
+
+describe("jsxIndex design system through aliases", () => {
+  const fixture = (name: string) =>
+    scan(fileURLToPath(new URL(`./fixtures/ds-aliases/${name}`, import.meta.url)));
+
+  it("blueprint-site: tsconfig alias, references, extends and relative imports", async () => {
+    const index = await fixture("blueprint-site");
+    expect(designSystemPackages(index)).toEqual(["@fabiannabi/blueprint"]);
+    expect(designSystemFolders(index)).toEqual(["packages/blueprint"]);
+    const app = jsxIndex(index).filter((e) => e.file === "src/App.tsx");
+    expect(app).toEqual([
+      { file: "src/App.tsx", name: "Card", props: [], hasSpread: false, line: 6, column: 3, origin: "local", source: "@/components/Card" },
+      {
+        file: "src/App.tsx", name: "Label", hasSpread: false, line: 7, column: 5, origin: "design-system",
+        source: "@fabiannabi/blueprint/components/Label/Label",
+        props: [{ name: "htmlFor", value: "q", line: 7, column: 12 }],
+      },
+      {
+        file: "src/App.tsx", name: "Text", props: [], hasSpread: false, line: 8, column: 5, origin: "design-system",
+        source: "@fabiannabi/blueprint/components/Text/Text",
+      },
+      {
+        file: "src/App.tsx", name: "Button", props: [], hasSpread: false, line: 9, column: 5, origin: "design-system",
+        source: "../packages/blueprint/src/components/Button/Button",
+      },
+    ]);
+    expect(jsxIndex(index).filter((e) => e.file.endsWith("Button.tsx"))).toEqual([
+      {
+        file: "packages/blueprint/src/components/Button/Button.tsx", name: "Text", props: [], hasSpread: false,
+        line: 2, column: 29, origin: "local", source: "../Text/Text",
+      },
+    ]);
+  });
+
+  it("calcom: workspace packages, declared or not, and relative imports into the design system", async () => {
+    const index = await fixture("calcom");
+    expect(designSystemPackages(index)).toEqual(["@calcom/ui"]);
+    expect(designSystemFolders(index)).toEqual(["packages/ui"]);
+    const file = "apps/web/pages/index.tsx";
+    expect(jsxIndex(index).filter((e) => e.file === file)).toEqual([
+      { file, name: "Shell", props: [], hasSpread: false, line: 7, column: 5, origin: "local", source: "../components/Shell" },
+      { file, name: "Logo", props: [], hasSpread: false, line: 8, column: 7, origin: "external", source: "@calcom/lib/Logo" },
+      {
+        file, name: "Button", hasSpread: false, line: 9, column: 7, origin: "design-system",
+        source: "@calcom/ui/components/button",
+        props: [{ name: "color", value: "primary", line: 9, column: 15 }],
+      },
+      {
+        file, name: "Dialog", props: [], hasSpread: false, line: 10, column: 7, origin: "design-system",
+        source: "../../../packages/ui/components/dialog",
+      },
+    ]);
+  });
+
+  it("config folders and alias prefixes", () => {
+    const folder = repo(
+      ["frontscan.config.json", "json", '{"designSystem":["./packages/ui"]}'],
+      ["apps/a/x.tsx", "tsx", 'import { B } from "../../packages/ui/src/B";\nconst x = <B />;'],
+    );
+    expect(designSystemPackages(folder)).toEqual([]);
+    expect(jsxIndex(folder)).toEqual([
+      { file: "apps/a/x.tsx", name: "B", props: [], hasSpread: false, line: 2, column: 11, origin: "design-system", source: "../../packages/ui/src/B" },
+    ]);
+    const alias = repo(
+      ["frontscan.config.json", "json", '{"designSystem":["@/components/ui"]}'],
+      ["x.tsx", "tsx", 'import { X } from "@/components/ui/x";\nconst x = <X />;'],
+    );
+    expect(jsxIndex(alias)).toEqual([
+      { file: "x.tsx", name: "X", props: [], hasSpread: false, line: 2, column: 11, origin: "design-system", source: "@/components/ui/x" },
+    ]);
   });
 });

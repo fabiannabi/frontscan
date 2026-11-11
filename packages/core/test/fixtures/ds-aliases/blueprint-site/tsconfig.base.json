@@ -1,0 +1,7 @@
+{
+  // aliases into the workspace
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": { "@fabiannabi/blueprint/*": ["./packages/blueprint/src/*"], "@/*": ["./src/*"] },
+  },
+}
