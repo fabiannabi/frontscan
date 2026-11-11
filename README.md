@@ -64,7 +64,11 @@ it took.
 
 ```bash
 npx frontscan .
+pnpm dlx frontscan .   # use this one inside pnpm repos
+yarn dlx frontscan .   # needs Yarn 2 or later (Yarn 1 has no dlx)
 ```
+
+Inside a pnpm repo, `npx` can crash with `Cannot read properties of null (reading 'package')`. That error comes from npm itself, not from frontscan. Use `pnpm dlx`, or run `npx` from outside the repo and pass the path, for example `npx frontscan C:\path\to\repo` or `npx frontscan ~/code/repo`.
 
 Releases: 0.1.0 published by hand; later versions from a `frontscan-vX.Y.Z` tag through npm trusted publishing with provenance, each approved by the maintainer.
 
