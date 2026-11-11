@@ -3,6 +3,7 @@ export { defineLens } from "./define-lens.js";
 export { sortFindings } from "./sort-findings.js";
 export { scan } from "./scan.js";
 export { designSystemFolders, designSystemPackages, isDesignSystemModule } from "./design-system.js";
+export { DEFAULT_NON_PRODUCT, productIndex } from "./product-files.js";
 export { workspacePackages } from "./workspace.js";
 export { jsxIndex } from "./jsx-index.js";
 export type { JsxElement, JsxOrigin, JsxProp } from "./jsx-index.js";

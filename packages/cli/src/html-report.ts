@@ -7,6 +7,8 @@ export interface HtmlReportInput {
   /** Name of the scanned repo, never a path. */
   readonly repo: string;
   readonly files: number;
+  /** Files left out as tests, fixtures and the like; shown in the header when above 0. */
+  readonly excluded?: number;
   /** The areas to show in the overview, in order. */
   readonly areas: readonly Area[];
   readonly findings: readonly Finding[];
@@ -192,7 +194,9 @@ export function htmlReport(input: HtmlReportInput): string {
     "<body>",
     "<header>",
     `<h1>${repo}</h1>`,
-    `<p>${plural(input.files, "file")}</p>`,
+    `<p>${plural(input.files, "file")}${
+      input.excluded !== undefined && input.excluded > 0 ? ` (${input.excluded} tests and fixtures left out)` : ""
+    }</p>`,
     "</header>",
     "<main>",
     main.join("\n"),

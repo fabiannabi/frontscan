@@ -7,7 +7,7 @@ import { main } from "../src/main.js";
 import type { Io } from "../src/main.js";
 
 const cwd = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures");
-const USAGE = "Usage: frontscan [path] [--json] [--details|--all] [--html <file>]\n";
+const USAGE = "Usage: frontscan [path] [--json] [--details|--all] [--all-files] [--html <file>]\n";
 
 async function run(argv: string[], dir = cwd) {
   let stdout = "";
@@ -49,6 +49,44 @@ const FINDINGS = [
     suggestion: "Define a colour token (a `--*` custom property in a token file) and use it here.",
   },
 ];
+
+const RAW_COLOUR_FIXTURE = {
+  lens: "census",
+  rule: "raw-colour",
+  area: "design-system",
+  severity: "warning",
+  message: "Raw colour `#ff0000` in `color` bypasses the design tokens.",
+  file: "test/fixtures/first-run/src/Button.css",
+  line: 2,
+  column: 3,
+  suggestion: "Define a colour token (a `--*` custom property in a token file) and use it here.",
+};
+
+const ADOPTION_SCORE = FINDINGS[0];
+
+const STORY_USAGE = {
+  lens: "census",
+  rule: "component-usage",
+  area: "design-system",
+  severity: "info",
+  message: "`Button` is used 1 time in 1 file: src/Button.stories.tsx (1).",
+};
+
+const NON_PRODUCT_SUMMARY = [
+  "non-product  ·  1 file (2 tests and fixtures left out)  ·  0ms",
+  "",
+  "area           errors  warnings  info",
+  "design-system       0         0     1",
+  "",
+  "No design system found; set one in frontscan.config.json.",
+  "",
+  "To fix",
+  "",
+  "Nothing to fix.",
+  "",
+  "1 info finding not listed; run with --details to see every finding.",
+  "",
+].join("\n");
 
 const SUMMARY = [
   "first-run  ·  3 files  ·  0ms",
@@ -224,6 +262,53 @@ describe("main", () => {
 
   it("accepts --json before the path", async () => {
     expect(await run(["--json", "first-run"])).toEqual(await run(["first-run", "--json"]));
+  });
+
+  it("leaves test, fixture and story files out by default", async () => {
+    // The only finding left is the repo-level census adoption-score; no raw-colour, no component-usage.
+    expect(await run(["non-product", "--json"])).toEqual({
+      code: 0,
+      stdout: `${JSON.stringify([ADOPTION_SCORE], null, 2)}\n`,
+      stderr: "",
+    });
+  });
+
+  it("brings them back with --all-files, anywhere in argv", async () => {
+    const expected = {
+      code: 0,
+      stdout: `${JSON.stringify([ADOPTION_SCORE, STORY_USAGE, RAW_COLOUR_FIXTURE], null, 2)}\n`,
+      stderr: "",
+    };
+    expect(await run(["non-product", "--all-files", "--json"])).toEqual(expected);
+    expect(await run(["--all-files", "--json", "non-product"])).toEqual(expected);
+  });
+
+  it("keeps --all as --details", async () => {
+    expect((await run(["non-product", "--all"])).stdout).toEqual((await run(["non-product", "--details"])).stdout);
+    expect((await run(["non-product", "--all"])).stdout).not.toEqual(
+      (await run(["non-product", "--all-files", "--details"])).stdout,
+    );
+  });
+
+  it("rejects --all-files=x", async () => {
+    expect(await run(["--all-files=x"])).toEqual({
+      code: 2,
+      stdout: "",
+      stderr: `frontscan: unknown option --all-files=x\n${USAGE}`,
+    });
+  });
+
+  it("says how many files the default summary left out", async () => {
+    expect(await run(["non-product"])).toEqual({ code: 0, stdout: NON_PRODUCT_SUMMARY, stderr: "" });
+  });
+
+  it("reports no product findings when scanning packages/cli itself", async () => {
+    const cliDir = path.resolve(cwd, "..", "..");
+    expect(await run(["--json"], cliDir)).toEqual({
+      code: 0,
+      stdout: `${JSON.stringify([ADOPTION_SCORE], null, 2)}\n`,
+      stderr: "",
+    });
   });
 
   it("prints the usage for --help", async () => {

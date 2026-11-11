@@ -41,6 +41,14 @@ export function smallInput(): HtmlReportInput {
 const mainOf = (html: string) => html.slice(html.indexOf("<main>"), html.indexOf("</main>") + 7);
 
 describe("htmlReport", () => {
+  it("says how many files were left out, only when above 0", () => {
+    const header = (html: string) => html.slice(html.indexOf("<header>"), html.indexOf("</header>") + 9);
+    expect(header(htmlReport({ ...empty, files: 1, excluded: 2 }))).toEqual(
+      "<header>\n<h1>demo</h1>\n<p>1 file (2 tests and fixtures left out)</p>\n</header>",
+    );
+    expect(htmlReport({ ...empty, excluded: 0 })).toEqual(htmlReport(empty));
+  });
+
   it("renders the full document", () => {
     const expected = readFileSync(path.join(here, "fixtures/html-report/expected.html"), "utf8");
     expect(htmlReport(smallInput())).toEqual(expected);

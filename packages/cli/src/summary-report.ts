@@ -7,6 +7,8 @@ export interface SummaryInput {
   /** Name of the scanned repo, never a path. */
   readonly repo: string;
   readonly files: number;
+  /** Files left out as tests, fixtures and the like; shown in the header when above 0. */
+  readonly excluded?: number;
   readonly durationMs: number;
   /** The areas to show in the table, in order. */
   readonly areas: readonly Area[];
@@ -59,7 +61,13 @@ export function summaryReport(input: SummaryInput): string {
 
   const sections: string[] = [];
   sections.push(
-    bold(`${input.repo}  ·  ${plural(input.files, "file")}  ·  ${formatDuration(input.durationMs)}`),
+    bold(
+      `${input.repo}  ·  ${plural(input.files, "file")}${
+        input.excluded !== undefined && input.excluded > 0
+          ? ` (${input.excluded} tests and fixtures left out)`
+          : ""
+      }  ·  ${formatDuration(input.durationMs)}`,
+    ),
   );
 
   const count = (area: Area, severity: Severity) =>

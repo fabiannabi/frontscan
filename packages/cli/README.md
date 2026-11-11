@@ -5,6 +5,7 @@ Run it with `npx frontscan .`, `pnpm dlx frontscan .` (use this one inside pnpm 
 ```bash
 frontscan [path]                 # every lens, readable summary
 frontscan --details              # every finding, one by one (alias: --all)
+frontscan --all-files            # also scan test, fixture, story and mock files (left out by default; see `product-files` in @frontscan/core)
 frontscan census|a11y|intl|agent-ready [path]
 frontscan --html report.html      # one self-contained HTML file; links resolve when it sits at the repo root
 frontscan --html=report.html      # the same, with `=`
