@@ -5,3 +5,5 @@ export { summaryReport, shouldColour } from "./summary-report.js";
 export type { SummaryInput } from "./summary-report.js";
 export { jsonReport } from "./json-report.js";
 export { LENSES } from "./lenses.js";
+export { htmlReport } from "./html-report.js";
+export type { HtmlReportInput } from "./html-report.js";

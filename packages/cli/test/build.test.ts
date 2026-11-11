@@ -53,6 +53,8 @@ const EXPECTED_FILES = [
   "census/src/raw-colour.js",
   "cli/src/bin.js",
   "cli/src/census-tables.js",
+  "cli/src/fix-groups.js",
+  "cli/src/html-report.js",
   "cli/src/index.js",
   "cli/src/json-report.js",
   "cli/src/lenses.js",

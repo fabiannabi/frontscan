@@ -1,10 +1,13 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import type { Finding, JsxElement } from "@frontscan/core";
+import { htmlReport } from "../src/html-report.js";
 import { main } from "../src/main.js";
+import type { Io } from "../src/main.js";
 
 const cwd = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures");
-const USAGE = "Usage: frontscan [path] [--json] [--details|--all]\n";
+const USAGE = "Usage: frontscan [path] [--json] [--details|--all] [--html <file>]\n";
 
 async function run(argv: string[], dir = cwd) {
   let stdout = "";
@@ -71,6 +74,63 @@ const TERMINAL = [
   "2 findings (0 errors, 1 warning, 1 info)",
   "",
 ].join("\n");
+
+async function runHtml(argv: string[], writeFile?: Io["writeFile"]) {
+  let stdout = "";
+  let stderr = "";
+  const written: [string, string][] = [];
+  const code = await main(argv, {
+    cwd,
+    stdout: (s) => (stdout += s),
+    stderr: (s) => (stderr += s),
+    now: () => 0,
+    writeFile: writeFile ?? ((p, t) => void written.push([p, t])),
+  });
+  return { code, stdout, stderr, written };
+}
+
+const expectedWrite = [
+  [
+    path.resolve(cwd, "out.html"),
+    htmlReport({
+      repo: "first-run",
+      files: 3,
+      areas: ["design-system"],
+      findings: FINDINGS as Finding[],
+      elements: [{ name: "Button", file: "src/App.tsx", line: 1, column: 1, props: [] } as unknown as JsxElement],
+    }),
+  ],
+];
+
+describe("main --html", () => {
+  it("writes the report and prints the summary", async () => {
+    const r = await runHtml(["first-run", "--html", "out.html"]);
+    expect({ code: r.code, stdout: r.stdout, stderr: r.stderr }).toEqual({ code: 0, stdout: SUMMARY, stderr: "" });
+    expect(r.written).toEqual(expectedWrite);
+  });
+
+  it("keeps --json and --details output", async () => {
+    const json = await runHtml(["first-run", "--json", "--html", "out.html"]);
+    expect(json.stdout).toEqual((await run(["first-run", "--json"])).stdout);
+    expect(json.written).toEqual(expectedWrite);
+    const details = await runHtml(["--details", "first-run", "--html", "out.html"]);
+    expect(details.stdout).toEqual(TERMINAL);
+    expect(details.written).toEqual(expectedWrite);
+  });
+
+  it("needs a file path", async () => {
+    const err = `frontscan: --html needs a file path\n${USAGE}`;
+    expect(await runHtml(["first-run", "--html"])).toEqual({ code: 2, stdout: "", stderr: err, written: [] });
+    expect(await runHtml(["--html", "--json"])).toEqual({ code: 2, stdout: "", stderr: err, written: [] });
+  });
+
+  it("reports a failed write", async () => {
+    const r = await runHtml(["first-run", "--html", "out.html"], () => {
+      throw new Error("ENOENT");
+    });
+    expect({ code: r.code, stderr: r.stderr }).toEqual({ code: 2, stderr: "frontscan: cannot write out.html\n" });
+  });
+});
 
 describe("main", () => {
   it("prints the findings as JSON", async () => {

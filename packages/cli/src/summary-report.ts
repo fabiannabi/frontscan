@@ -1,6 +1,7 @@
 import { sortFindings } from "@frontscan/core";
 import type { Area, Finding, JsxElement, Severity } from "@frontscan/core";
 import { componentRows, propRows } from "./census-tables.js";
+import { fixGroups } from "./fix-groups.js";
 
 export interface SummaryInput {
   /** Name of the scanned repo, never a path. */
@@ -72,23 +73,8 @@ export function summaryReport(input: SummaryInput): string {
 
   // To fix
   const fixLines = [bold("To fix"), ""];
-  const groups = new Map<string, { id: string; severity: Severity; findings: Finding[] }>();
-  for (const f of sorted) {
-    if (f.severity === "info") continue;
-    const id = `${f.lens}/${f.rule}`;
-    const key = `${f.severity} ${id}`;
-    let g = groups.get(key);
-    if (!g) groups.set(key, (g = { id, severity: f.severity, findings: [] }));
-    g.findings.push(f);
-  }
-  if (groups.size === 0) fixLines.push("Nothing to fix.");
-  const rank = (s: Severity) => (s === "error" ? 0 : 1);
-  const blocks = [...groups.values()].sort(
-    (a, b) =>
-      rank(a.severity) - rank(b.severity) ||
-      b.findings.length - a.findings.length ||
-      (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
-  );
+  const blocks = fixGroups(sorted, ["error", "warning"]);
+  if (blocks.length === 0) fixLines.push("Nothing to fix.");
   const blockTexts: string[] = [];
   for (const g of blocks) {
     const colourCode = g.severity === "error" ? RED : YELLOW;
