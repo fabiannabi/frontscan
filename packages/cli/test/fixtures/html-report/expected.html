@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:">
+<title>frontscan · demo</title>
+<style>
+:root{color-scheme:light dark;--bg:#fff;--fg:#1b1b1b;--muted:#4a4a4a;--line:#c9c9c9;--link:#0b4fb3;--error:#a30018;--warning:#7a4600;--info:#3d3d3d}
+@media (prefers-color-scheme: dark){:root{--bg:#141414;--fg:#ececec;--muted:#b8b8b8;--line:#4a4a4a;--link:#8ab8ff;--error:#ff9a9a;--warning:#ffcc80;--info:#c8c8c8}}
+body{margin:0 auto;max-width:72rem;padding:1.5rem;background:var(--bg);color:var(--fg);font:1rem/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--link)}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em}
+table{border-collapse:collapse;margin:.5rem 0 1.5rem}
+caption{text-align:left;font-weight:600;padding:.25rem 0}
+th,td{border:1px solid var(--line);padding:.25rem .75rem;text-align:left}
+td.num,th.num{text-align:right}
+section.rule{border-left:.3rem solid var(--line);padding-left:1rem;margin:1rem 0}
+section.rule.error{border-left-color:var(--error)}
+section.rule.warning{border-left-color:var(--warning)}
+section.rule.info{border-left-color:var(--info)}
+.error .sev{color:var(--error)}
+.warning .sev{color:var(--warning)}
+.info .sev{color:var(--info)}
+.sev{font-weight:700}
+li{margin:.4rem 0}
+.hint{color:var(--muted)}
+summary{cursor:pointer;font-weight:600}
+label{display:block;font-weight:600}
+input[type=search]{font:inherit;padding:.25rem .5rem;margin:.25rem 0 1rem;min-width:16rem;color:var(--fg);background:var(--bg);border:1px solid var(--line)}
+@media print{.filter{display:none}details>:not(summary){display:block}tr,li{break-inside:avoid}a{color:inherit}}
+</style>
+</head>
+<body>
+<header>
+<h1>demo</h1>
+<p>9 files</p>
+</header>
+<main>
+<table>
+<caption>Overview</caption>
+<thead><tr><th scope="col">area</th><th scope="col" class="num">errors</th><th scope="col" class="num">warnings</th><th scope="col" class="num">info</th></tr></thead>
+<tbody>
+<tr><th scope="row">design-system</th><td class="num">0</td><td class="num">7</td><td class="num">1</td></tr>
+<tr><th scope="row">a11y</th><td class="num">1</td><td class="num">0</td><td class="num">0</td></tr>
+</tbody>
+</table>
+<section>
+<h2>To fix</h2>
+<section class="rule error">
+<h3>a11y/img-alt · <span class="sev">error</span> · 1</h3>
+<ul>
+<li><a href="src/A.tsx"><code>src/A.tsx:4</code></a> Image without alt.<br><span class="hint">→ Add an alt.</span></li>
+</ul>
+</section>
+<section class="rule warning">
+<h3>census/raw-colour · <span class="sev">warning</span> · 7</h3>
+<ul>
+<li><a href="src/a.css"><code>src/a.css:1</code></a> Raw colour #000.<br><span class="hint">→ Use a token.</span></li>
+<li><a href="src/a.css"><code>src/a.css:2</code></a> Raw colour #111.<br><span class="hint">→ Use a token.</span></li>
+<li><a href="src/a.css"><code>src/a.css:3</code></a> Raw colour #222.<br><span class="hint">→ Use a token.</span></li>
+<li><a href="src/a.css"><code>src/a.css:4</code></a> Raw colour #333.<br><span class="hint">→ Use a token.</span></li>
+<li><a href="src/a.css"><code>src/a.css:5</code></a> Raw colour #444.<br><span class="hint">→ Use a token.</span></li>
+<li><a href="src/a.css"><code>src/a.css:6</code></a> Raw colour #555.<br><span class="hint">→ Use a token.</span></li>
+<li><a href="src/a.css"><code>src/a.css:7</code></a> Raw colour #666.<br><span class="hint">→ Use a token.</span></li>
+</ul>
+</section>
+<section class="rule warning">
+<h3>agent-ready/no-agents-md · <span class="sev">warning</span> · 1</h3>
+<ul>
+<li><code>(repo)</code> No AGENTS.md.</li>
+</ul>
+</section>
+</section>
+<section>
+<details>
+<summary>Info</summary>
+<section class="rule info">
+<h3>census/component-usage · <span class="sev">info</span> · 1</h3>
+<ul>
+<li><a href="src/App.tsx"><code>src/App.tsx</code></a> `Button` is used.</li>
+</ul>
+</section>
+</details>
+</section>
+<div class="filter">
+<label for="filter">Filter components and props</label>
+<input id="filter" type="search">
+</div>
+<section>
+<h2>Components</h2>
+<table>
+<caption>Components by use</caption>
+<thead><tr><th scope="col">component</th><th scope="col" class="num">uses</th><th scope="col" class="num">files</th></tr></thead>
+<tbody>
+<tr data-filter="CompA"><th scope="row">CompA</th><td class="num">2</td><td class="num">2</td></tr>
+<tr data-filter="CompB"><th scope="row">CompB</th><td class="num">1</td><td class="num">1</td></tr>
+<tr data-filter="CompC"><th scope="row">CompC</th><td class="num">1</td><td class="num">1</td></tr>
+<tr data-filter="CompD"><th scope="row">CompD</th><td class="num">1</td><td class="num">1</td></tr>
+<tr data-filter="CompE"><th scope="row">CompE</th><td class="num">1</td><td class="num">1</td></tr>
+<tr data-filter="CompF"><th scope="row">CompF</th><td class="num">1</td><td class="num">1</td></tr>
+<tr data-filter="CompG"><th scope="row">CompG</th><td class="num">1</td><td class="num">1</td></tr>
+<tr data-filter="CompH"><th scope="row">CompH</th><td class="num">1</td><td class="num">1</td></tr>
+<tr data-filter="CompI"><th scope="row">CompI</th><td class="num">1</td><td class="num">1</td></tr>
+<tr data-filter="CompJ"><th scope="row">CompJ</th><td class="num">1</td><td class="num">1</td></tr>
+<tr data-filter="CompK"><th scope="row">CompK</th><td class="num">1</td><td class="num">1</td></tr>
+<tr data-filter="CompL"><th scope="row">CompL</th><td class="num">1</td><td class="num">1</td></tr>
+</tbody>
+</table>
+</section>
+<section>
+<h2>Props</h2>
+<table data-props>
+<caption>CompA (2 uses)</caption>
+<thead><tr><th scope="col">prop</th><th scope="col" class="num">uses</th><th scope="col">values</th></tr></thead>
+<tbody>
+<tr data-filter="CompA variant"><th scope="row">variant</th><td class="num">2</td><td>&quot;ghost&quot; (1), &quot;primary&quot; (1)</td></tr>
+<tr data-filter="CompA onClick"><th scope="row">onClick</th><td class="num">1</td><td>dynamic (1)</td></tr>
+</tbody>
+</table>
+</section>
+</main>
+<script>
+(function(){var i=document.getElementById("filter");if(!i)return;
+var rows=document.querySelectorAll("[data-filter]");
+function apply(){var q=i.value.toLowerCase();for(var n=0;n<rows.length;n++){var r=rows[n];r.hidden=q!==""&&r.getAttribute("data-filter").toLowerCase().indexOf(q)<0}
+var ts=document.querySelectorAll("[data-props]");for(var k=0;k<ts.length;k++){ts[k].hidden=q!==""&&!ts[k].querySelector("tbody tr:not([hidden])")}}
+i.addEventListener("input",apply);
+window.addEventListener("beforeprint",function(){var d=document.querySelectorAll("details");for(var n=0;n<d.length;n++)d[n].open=true})})();
+</script>
+</body>
+</html>

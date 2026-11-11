@@ -1,7 +1,8 @@
-import { statSync } from "node:fs";
+import { statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { jsxIndex, scan, sortFindings } from "@frontscan/core";
 import type { Finding } from "@frontscan/core";
+import { htmlReport } from "./html-report.js";
 import { jsonReport } from "./json-report.js";
 import { LENSES } from "./lenses.js";
 import { summaryReport } from "./summary-report.js";
@@ -15,9 +16,11 @@ export interface Io {
   colour?: boolean;
   /** A monotonic clock in milliseconds, to time the scan. Defaults to `performance.now`. */
   now?: () => number;
+  /** Writes the `--html` report. Defaults to `writeFileSync(path, text, "utf8")`. */
+  writeFile?(path: string, text: string): void;
 }
 
-const USAGE = "Usage: frontscan [path] [--json] [--details|--all]\n";
+const USAGE = "Usage: frontscan [path] [--json] [--details|--all] [--html <file>]\n";
 
 function isDirectory(p: string): boolean {
   try {
@@ -34,11 +37,21 @@ export async function main(argv: readonly string[], io: Io): Promise<number> {
   }
   let json = false;
   let details = false;
+  let htmlFile: string | undefined;
   const paths: string[] = [];
-  for (const arg of argv) {
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i]!;
     if (arg === "--json") json = true;
     else if (arg === "--details" || arg === "--all") details = true;
-    else if (arg.startsWith("-")) {
+    else if (arg === "--html") {
+      const next = argv[i + 1];
+      if (next === undefined || next.startsWith("-")) {
+        io.stderr(`frontscan: --html needs a file path\n${USAGE}`);
+        return 2;
+      }
+      htmlFile = next;
+      i++;
+    } else if (arg.startsWith("-")) {
       io.stderr(`frontscan: unknown option ${arg}\n${USAGE}`);
       return 2;
     } else paths.push(arg);
@@ -59,14 +72,15 @@ export async function main(argv: readonly string[], io: Io): Promise<number> {
   const findings: Finding[] = [];
   for (const lens of LENSES) findings.push(...(await lens.run(index)));
   const sorted = sortFindings(findings);
+  const areas = AREAS.filter((a) => LENSES.some((l) => l.area === a));
+  const repo = path.basename(root);
   if (json) io.stdout(jsonReport(sorted));
   else if (details) io.stdout(terminalReport(sorted));
   else {
-    const areas = AREAS.filter((a) => LENSES.some((l) => l.area === a));
     const durationMs = now() - started;
     io.stdout(
       summaryReport({
-        repo: path.basename(root),
+        repo,
         files: index.files.length,
         durationMs,
         areas,
@@ -75,6 +89,21 @@ export async function main(argv: readonly string[], io: Io): Promise<number> {
         colour: io.colour === true,
       }),
     );
+  }
+  if (htmlFile !== undefined) {
+    const html = htmlReport({
+      repo,
+      files: index.files.length,
+      areas,
+      findings: sorted,
+      elements: jsxIndex(index),
+    });
+    try {
+      (io.writeFile ?? ((p, t) => writeFileSync(p, t, "utf8")))(path.resolve(io.cwd, htmlFile), html);
+    } catch {
+      io.stderr(`frontscan: cannot write ${htmlFile}\n`);
+      return 2;
+    }
   }
   return 0;
 }
