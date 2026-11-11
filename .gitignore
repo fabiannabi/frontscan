@@ -6,3 +6,4 @@ coverage/
 packages/*/test/fixtures/.tmp-*/
 packages/cli/LICENSE
 *.tgz
+.pnpm-store/
