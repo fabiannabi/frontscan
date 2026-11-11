@@ -1,6 +1,6 @@
 {
   "name": "frontscan",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The frontscan command: scan a repo once, run every lens, report in the terminal, as JSON, or as a CI check.",
   "type": "module",
   "license": "MIT",
@@ -12,7 +12,7 @@
     "node": ">=24"
   },
   "bin": {
-    "frontscan": "./dist/cli/src/bin.js"
+    "frontscan": "dist/cli/src/bin.js"
   },
   "files": ["dist", "LICENSE", "README.md"],
   "exports": {
