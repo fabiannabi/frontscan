@@ -11,6 +11,7 @@ const el = (file: string, name: string, props: JsxProp[] = []): JsxElement => ({
   hasSpread: false,
   line: 1,
   column: 1,
+  origin: /^[A-Z]/.test(name) ? "local" : "html",
 });
 
 describe("componentRows", () => {

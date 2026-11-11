@@ -1,4 +1,5 @@
 import ts from "typescript";
+import { declaredDependencies, designSystemPackages, isDesignSystemModule } from "./design-system.js";
 import type { RepoIndex } from "./types.js";
 
 export interface JsxProp {
@@ -8,6 +9,8 @@ export interface JsxProp {
   readonly column: number;
 }
 
+export type JsxOrigin = "design-system" | "local" | "external" | "html";
+
 export interface JsxElement {
   readonly file: string;
   readonly name: string;
@@ -15,6 +18,8 @@ export interface JsxElement {
   readonly hasSpread: boolean;
   readonly line: number;
   readonly column: number;
+  readonly origin: JsxOrigin;
+  readonly source?: string;
 }
 
 type StaticValue = string | number | boolean | null;
@@ -40,8 +45,36 @@ function staticValue(attr: ts.JsxAttribute): { value: StaticValue } | undefined 
   return undefined;
 }
 
+/** `@scope/name` or `name` from an import specifier. */
+function packageName(specifier: string): string {
+  const parts = specifier.split("/");
+  return specifier.startsWith("@") ? parts.slice(0, 2).join("/") : (parts[0] ?? specifier);
+}
+
+const isBare = (specifier: string) =>
+  !specifier.startsWith(".") && !specifier.startsWith("/") && !specifier.startsWith("@/");
+
+/** Local names bound by the file's value imports, mapped to their specifier. */
+function importsOf(sf: ts.SourceFile): Map<string, string> {
+  const imports = new Map<string, string>();
+  for (const st of sf.statements) {
+    if (!ts.isImportDeclaration(st) || !ts.isStringLiteral(st.moduleSpecifier)) continue;
+    const clause = st.importClause;
+    if (clause === undefined || clause.isTypeOnly) continue;
+    const spec = st.moduleSpecifier.text;
+    if (clause.name) imports.set(clause.name.text, spec);
+    const nb = clause.namedBindings;
+    if (nb === undefined) continue;
+    if (ts.isNamespaceImport(nb)) imports.set(nb.name.text, spec);
+    else for (const el of nb.elements) if (!el.isTypeOnly) imports.set(el.name.text, spec);
+  }
+  return imports;
+}
+
 export function jsxIndex(index: RepoIndex): readonly JsxElement[] {
   const out: JsxElement[] = [];
+  const dsPackages = designSystemPackages(index);
+  const dependencies = declaredDependencies(index);
   for (const file of index.files) {
     if (file.kind !== "tsx" && file.kind !== "jsx") continue;
     const sf = ts.createSourceFile(
@@ -54,6 +87,19 @@ export function jsxIndex(index: RepoIndex): readonly JsxElement[] {
     const pos = (node: ts.Node) => {
       const p = sf.getLineAndCharacterOfPosition(node.getStart(sf));
       return { line: p.line + 1, column: p.character + 1 };
+    };
+    const imports = importsOf(sf);
+    const classify = (tag: string): { origin: JsxOrigin; source?: string } => {
+      const root = tag.split(/[.:]/)[0] ?? tag;
+      const source = imports.get(root);
+      if (source !== undefined) {
+        if (isDesignSystemModule(source, dsPackages)) return { origin: "design-system", source };
+        if (isBare(source) && dependencies.has(packageName(source))) {
+          return { origin: "external", source };
+        }
+        return { origin: "local", source };
+      }
+      return { origin: /^[A-Z]/.test(root) ? "local" : "html" };
     };
     const visit = (node: ts.Node): void => {
       if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
@@ -71,12 +117,14 @@ export function jsxIndex(index: RepoIndex): readonly JsxElement[] {
             ...pos(attr.name),
           });
         }
+        const name = node.tagName.getText(sf);
         out.push({
           file: file.path,
-          name: node.tagName.getText(sf),
+          name,
           props,
           hasSpread,
           ...pos(node),
+          ...classify(name),
         });
       }
       ts.forEachChild(node, visit);
