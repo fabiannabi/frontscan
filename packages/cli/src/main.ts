@@ -43,14 +43,14 @@ export async function main(argv: readonly string[], io: Io): Promise<number> {
     const arg = argv[i]!;
     if (arg === "--json") json = true;
     else if (arg === "--details" || arg === "--all") details = true;
-    else if (arg === "--html") {
-      const next = argv[i + 1];
-      if (next === undefined || next.startsWith("-")) {
+    else if (arg === "--html" || arg.startsWith("--html=")) {
+      const next = arg === "--html" ? argv[i + 1] : arg.slice("--html=".length);
+      if (next === undefined || next === "" || next.startsWith("-")) {
         io.stderr(`frontscan: --html needs a file path\n${USAGE}`);
         return 2;
       }
       htmlFile = next;
-      i++;
+      if (arg === "--html") i++;
     } else if (arg.startsWith("-")) {
       io.stderr(`frontscan: unknown option ${arg}\n${USAGE}`);
       return 2;

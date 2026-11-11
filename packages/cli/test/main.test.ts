@@ -122,6 +122,8 @@ describe("main --html", () => {
     const err = `frontscan: --html needs a file path\n${USAGE}`;
     expect(await runHtml(["first-run", "--html"])).toEqual({ code: 2, stdout: "", stderr: err, written: [] });
     expect(await runHtml(["--html", "--json"])).toEqual({ code: 2, stdout: "", stderr: err, written: [] });
+    expect(await runHtml(["first-run", "--html="])).toEqual({ code: 2, stdout: "", stderr: err, written: [] });
+    expect(await runHtml(["first-run", "--html=-x"])).toEqual({ code: 2, stdout: "", stderr: err, written: [] });
   });
 
   it("reports a failed write", async () => {
@@ -129,6 +131,48 @@ describe("main --html", () => {
       throw new Error("ENOENT");
     });
     expect({ code: r.code, stderr: r.stderr }).toEqual({ code: 2, stderr: "frontscan: cannot write out.html\n" });
+  });
+
+  it("accepts --html=<file>", async () => {
+    expect(await runHtml(["first-run", "--html=out.html"])).toEqual({
+      code: 0,
+      stdout: SUMMARY,
+      stderr: "",
+      written: expectedWrite,
+    });
+  });
+
+  it("keeps --json and --details output with --html=<file>", async () => {
+    const json = await runHtml(["first-run", "--json", "--html=out.html"]);
+    expect(json).toEqual({
+      code: 0,
+      stdout: (await run(["first-run", "--json"])).stdout,
+      stderr: "",
+      written: expectedWrite,
+    });
+    expect(await runHtml(["--details", "first-run", "--html=out.html"])).toEqual({
+      code: 0,
+      stdout: TERMINAL,
+      stderr: "",
+      written: expectedWrite,
+    });
+  });
+
+  it("splits --html=<file> at the first = only", async () => {
+    const r = await runHtml(["first-run", "--html=a=b.html"]);
+    expect(r).toEqual({
+      code: 0,
+      stdout: SUMMARY,
+      stderr: "",
+      written: [[path.resolve(cwd, "a=b.html"), expectedWrite[0]![1]]],
+    });
+  });
+
+  it("reports a failed write with --html=<file>", async () => {
+    const r = await runHtml(["first-run", "--html=out.html"], () => {
+      throw new Error("ENOENT");
+    });
+    expect(r).toEqual({ code: 2, stdout: SUMMARY, stderr: "frontscan: cannot write out.html\n", written: [] });
   });
 });
 
@@ -179,6 +223,19 @@ describe("main", () => {
       code: 2,
       stdout: "",
       stderr: `frontscan: unknown option --ci\n${USAGE}`,
+    });
+  });
+
+  it("rejects = on options that take no value, and unknown options with =", async () => {
+    expect(await run(["first-run", "--json=1"])).toEqual({
+      code: 2,
+      stdout: "",
+      stderr: `frontscan: unknown option --json=1\n${USAGE}`,
+    });
+    expect(await run(["first-run", "--nope=x"])).toEqual({
+      code: 2,
+      stdout: "",
+      stderr: `frontscan: unknown option --nope=x\n${USAGE}`,
     });
   });
 
