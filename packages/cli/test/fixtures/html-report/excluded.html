@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:">
+<title>frontscan · demo</title>
+<style>
+:root{color-scheme:light dark;--bg:#fff;--fg:#1b1b1b;--muted:#4a4a4a;--line:#c9c9c9;--link:#0b4fb3;--error:#a30018;--warning:#7a4600;--info:#3d3d3d}
+@media (prefers-color-scheme: dark){:root{--bg:#141414;--fg:#ececec;--muted:#b8b8b8;--line:#4a4a4a;--link:#8ab8ff;--error:#ff9a9a;--warning:#ffcc80;--info:#c8c8c8}}
+body{margin:0 auto;max-width:72rem;padding:1.5rem;background:var(--bg);color:var(--fg);font:1rem/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--link)}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em}
+table{border-collapse:collapse;margin:.5rem 0 1.5rem}
+caption{text-align:left;font-weight:600;padding:.25rem 0}
+th,td{border:1px solid var(--line);padding:.25rem .75rem;text-align:left}
+td.num,th.num{text-align:right}
+section.rule{border-left:.3rem solid var(--line);padding-left:1rem;margin:1rem 0}
+section.rule.error{border-left-color:var(--error)}
+section.rule.warning{border-left-color:var(--warning)}
+section.rule.info{border-left-color:var(--info)}
+.error .sev{color:var(--error)}
+.warning .sev{color:var(--warning)}
+.info .sev{color:var(--info)}
+.sev{font-weight:700}
+li{margin:.4rem 0}
+.hint{color:var(--muted)}
+summary{cursor:pointer;font-weight:600}
+label{display:block;font-weight:600}
+input[type=search]{font:inherit;padding:.25rem .5rem;margin:.25rem 0 1rem;min-width:16rem;color:var(--fg);background:var(--bg);border:1px solid var(--line)}
+@media print{.filter{display:none}details>:not(summary){display:block}details::details-content{content-visibility:visible;display:contents}tr,li{break-inside:avoid}a{color:inherit}}
+</style>
+</head>
+<body>
+<header>
+<h1>demo</h1>
+<p>1 file (2 tests and fixtures left out)</p>
+</header>
+<main>
+<table>
+<caption>Overview</caption>
+<thead><tr><th scope="col">area</th><th scope="col" class="num">errors</th><th scope="col" class="num">warnings</th><th scope="col" class="num">info</th></tr></thead>
+<tbody>
+<tr><th scope="row">design-system</th><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+</tbody>
+</table>
+<section>
+<h2>To fix</h2>
+<p>Nothing to fix.</p>
+</section>
+</main>
+<script>
+(function(){var i=document.getElementById("filter");if(!i)return;
+var rows=document.querySelectorAll("[data-filter]");
+function apply(){var q=i.value.toLowerCase();for(var n=0;n<rows.length;n++){var r=rows[n];r.hidden=q!==""&&r.getAttribute("data-filter").toLowerCase().indexOf(q)<0}
+var ts=document.querySelectorAll("[data-props]");for(var k=0;k<ts.length;k++){ts[k].hidden=q!==""&&!ts[k].querySelector("tbody tr:not([hidden])")}}
+i.addEventListener("input",apply);
+window.addEventListener("beforeprint",function(){var d=document.querySelectorAll("details");for(var n=0;n<d.length;n++)d[n].open=true})})();
+</script>
+</body>
+</html>
