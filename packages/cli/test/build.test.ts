@@ -47,6 +47,7 @@ describe("build", () => {
 });
 
 const EXPECTED_FILES = [
+  "census/src/adoption-score.js",
   "census/src/component-usage.js",
   "census/src/index.js",
   "census/src/prop-usage.js",

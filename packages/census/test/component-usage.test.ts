@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { scan, type FileKind, type RepoIndex } from "@frontscan/core";
+import { scan, type FileKind, type Finding, type RepoIndex } from "@frontscan/core";
 import { census } from "../src/index.js";
 
 const repo = (...files: [string, FileKind, string][]): RepoIndex => ({
@@ -16,7 +16,8 @@ const finding = (message: string) => ({
   message,
 });
 
-const run = (...files: [string, FileKind, string][]) => census.run(repo(...files));
+const withoutScore = (findings: readonly Finding[]) => findings.filter((f) => f.rule !== "adoption-score");
+const run = async (...files: [string, FileKind, string][]) => withoutScore(await census.run(repo(...files)));
 const tsx = (text: string) => run(["a.tsx", "tsx", text]);
 
 describe("census component-usage", () => {
@@ -24,7 +25,7 @@ describe("census component-usage", () => {
     const index = await scan(
       fileURLToPath(new URL("./fixtures/component-usage", import.meta.url)),
     );
-    expect(await census.run(index)).toEqual([
+    expect(withoutScore(await census.run(index))).toEqual([
       finding("`Button` is used 3 times in 2 files: src/App.tsx (2), src/Page.jsx (1)."),
       finding("`Card` is used 1 time in 1 file: src/App.tsx (1)."),
       finding("`Layout.Header` is used 1 time in 1 file: src/App.tsx (1)."),

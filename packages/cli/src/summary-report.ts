@@ -71,6 +71,9 @@ export function summaryReport(input: SummaryInput): string {
     ]).join("\n"),
   );
 
+  const score = sorted.find((f) => f.lens === "census" && f.rule === "adoption-score");
+  if (score !== undefined) sections.push(score.message);
+
   // To fix
   const fixLines = [bold("To fix"), ""];
   const blocks = fixGroups(sorted, ["error", "warning"]);
