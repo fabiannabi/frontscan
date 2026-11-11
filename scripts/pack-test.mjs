@@ -25,22 +25,32 @@ function listFiles(dir, prefix = "") {
 const packDir = mkdtempSync(join(tmpdir(), "frontscan-pack-"));
 const installDir = mkdtempSync(join(tmpdir(), "frontscan-install-"));
 const copyDir = mkdtempSync(join(tmpdir(), "frontscan-fixture-"));
+const tarDir = mkdtempSync(join(tmpdir(), "frontscan-tarball-"));
 
 try {
   const build = run("pnpm", ["build"], root);
   assert.equal(build.status, 0, build.stderr);
 
-  const pack = run("pnpm", ["--filter", "frontscan", "pack", "--pack-destination", packDir], root);
+  const pack = run("npm", ["pack", "--pack-destination", packDir], join(root, "packages", "cli"));
   assert.equal(pack.status, 0, pack.stderr);
   const tgz = readdirSync(packDir).find((f) => f.endsWith(".tgz"));
-  assert.ok(tgz, "pnpm pack produced no .tgz");
+  assert.ok(tgz, "npm pack produced no .tgz");
+
+  const extract = run("tar", ["-xzf", join(packDir, tgz), "-C", tarDir], root);
+  assert.equal(extract.status, 0, extract.stderr);
+  const tarManifest = JSON.parse(readFileSync(join(tarDir, "package", "package.json"), "utf8"));
+  assert.deepStrictEqual(
+    tarManifest.bin,
+    { frontscan: "dist/cli/src/bin.js" },
+    "tarball package.json bin.frontscan is missing or wrong (npm may have stripped it)",
+  );
 
   const install = run("npm", ["install", "--no-audit", "--no-fund", join(packDir, tgz)], installDir);
   assert.equal(install.status, 0, install.stderr);
 
   const pkgDir = join(installDir, "node_modules", "frontscan");
   const manifest = JSON.parse(readFileSync(join(pkgDir, "package.json"), "utf8"));
-  assert.equal(manifest.bin.frontscan, "./dist/cli/src/bin.js");
+  assert.equal(manifest.bin.frontscan, "dist/cli/src/bin.js");
   assert.deepStrictEqual(manifest.dependencies, { typescript: "6.0.3" });
   assert.equal("private" in manifest, false);
 
@@ -59,5 +69,5 @@ try {
   assert.equal(bare.status, 0, bare.stderr);
   console.log("pack test passed");
 } finally {
-  for (const dir of [packDir, installDir, copyDir]) rmSync(dir, { recursive: true, force: true });
+  for (const dir of [packDir, installDir, copyDir, tarDir]) rmSync(dir, { recursive: true, force: true });
 }
