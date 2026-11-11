@@ -66,18 +66,34 @@ describe("jsxIndex", () => {
   });
 
   it("keeps names as written", () => {
-    const names = tsx(
-      "const x = <div><Menu.Item /><svg:rect xlink:href=\"a\" aria-label=\"b\" /><List<Item> items={x} /></div>;",
-    );
-    expect(names.map((e) => e.name)).toEqual(["div", "Menu.Item", "svg:rect", "List"]);
-    expect(names[2]!.props.map((p) => p.name)).toEqual(["xlink:href", "aria-label"]);
+    expect(
+      tsx(
+        "const x = <div><Menu.Item /><svg:rect xlink:href=\"a\" aria-label=\"b\" /><List<Item> items={x} /></div>;",
+      ),
+    ).toEqual([
+      { file: "a.tsx", name: "div", props: [], hasSpread: false, line: 1, column: 11, origin: "html" },
+      { file: "a.tsx", name: "Menu.Item", props: [], hasSpread: false, line: 1, column: 16, origin: "local" },
+      {
+        file: "a.tsx", name: "svg:rect", hasSpread: false, line: 1, column: 29, origin: "html",
+        props: [
+          { name: "xlink:href", value: "a", line: 1, column: 39 },
+          { name: "aria-label", value: "b", line: 1, column: 54 },
+        ],
+      },
+      {
+        file: "a.tsx", name: "List", hasSpread: false, line: 1, column: 71, origin: "local",
+        props: [{ name: "items", line: 1, column: 83 }],
+      },
+    ]);
   });
 
   it("skips fragments but indexes their children and React.Fragment", () => {
-    expect(tsx("const x = <><A /></>;").map((e) => e.name)).toEqual(["A"]);
-    expect(tsx("const x = <React.Fragment><A /></React.Fragment>;").map((e) => e.name)).toEqual([
-      "React.Fragment",
-      "A",
+    expect(tsx("const x = <><A /></>;")).toEqual([
+      { file: "a.tsx", name: "A", props: [], hasSpread: false, line: 1, column: 13, origin: "local" },
+    ]);
+    expect(tsx("const x = <React.Fragment><A /></React.Fragment>;")).toEqual([
+      { file: "a.tsx", name: "React.Fragment", props: [], hasSpread: false, line: 1, column: 11, origin: "local" },
+      { file: "a.tsx", name: "A", props: [], hasSpread: false, line: 1, column: 27, origin: "local" },
     ]);
   });
 
@@ -88,10 +104,10 @@ describe("jsxIndex", () => {
         ["a.tsx", "tsx", "const x = <C />;"],
       ),
     );
-    expect(out.map((e) => [e.file, e.name])).toEqual([
-      ["b.tsx", "A"],
-      ["b.tsx", "B"],
-      ["a.tsx", "C"],
+    expect(out).toEqual([
+      { file: "b.tsx", name: "A", props: [], hasSpread: false, line: 1, column: 11, origin: "local" },
+      { file: "b.tsx", name: "B", props: [], hasSpread: false, line: 1, column: 14, origin: "local" },
+      { file: "a.tsx", name: "C", props: [], hasSpread: false, line: 1, column: 11, origin: "local" },
     ]);
   });
 
@@ -169,6 +185,30 @@ describe("jsxIndex", () => {
       ]);
     });
 
+    it("ignores require and dynamic import", () => {
+      expect(
+        one('const Button = require("@acme/ui");\nconst Card = import("@acme/ui");\nconst x = <Button><Card/></Button>;'),
+      ).toEqual([
+        { ...base, name: "Button", line: 3, column: 11, origin: "local" },
+        { ...base, name: "Card", line: 3, column: 19, origin: "local" },
+      ]);
+    });
+
+    it("ignores an inline type import but keeps the value import", () => {
+      expect(
+        one('import { type Button, Card } from "@acme/ui";\nconst x = <Button><Card/></Button>;'),
+      ).toEqual([
+        { ...base, name: "Button", line: 2, column: 11, origin: "local" },
+        { ...base, name: "Card", line: 2, column: 19, origin: "design-system", source: "@acme/ui" },
+      ]);
+    });
+
+    it("bare import of a package that is not a dependency is local", () => {
+      expect(one('import { Card } from "components/Card";\nconst x = <Card/>;')).toEqual([
+        { ...base, name: "Card", line: 2, column: 11, origin: "local", source: "components/Card" },
+      ]);
+    });
+
     it("has no design-system origin without config or detection", () => {
       const out = jsxIndex(
         repo(["a.tsx", "tsx", 'import { Button } from "@acme/ui";\nconst x = <Button/>;']),
@@ -196,6 +236,10 @@ describe("jsxIndex", () => {
   it("does not throw on broken files and is deterministic", () => {
     const index = repo(["a.tsx", "tsx", "const x = <div><span></div>;"]);
     expect(() => jsxIndex(index)).not.toThrow();
+    expect(jsxIndex(index)).toEqual([
+      { file: "a.tsx", name: "div", props: [], hasSpread: false, line: 1, column: 11, origin: "html" },
+      { file: "a.tsx", name: "span", props: [], hasSpread: false, line: 1, column: 16, origin: "html" },
+    ]);
     expect(jsxIndex(index)).toEqual(jsxIndex(index));
   });
 });
